@@ -8,8 +8,6 @@ import Explore from './pages/Explore.jsx'
 import Profile from './pages/Profile.jsx'
 import ActivityPublic from './pages/ActivityPublic.jsx'
 import AdminLogin from './pages/admin/Login.jsx'
-import AgencyRegister from "./pages/AgencyRegister.jsx"
-import AgencyVerify from "./pages/AgencyVerify.jsx"
 import AdminActivities from './pages/admin/Activities.jsx'
 
 function AppShell({children}) {
@@ -20,7 +18,6 @@ function AppShell({children}) {
           <Link to="/" className="font-bold text-lg">Rutas <span className="text-brand-amber">VIVAS</span> Tolima</Link>
           <nav className="text-sm space-x-4">
             <Link to="/explore">Explorar</Link>
-            <Link to="/agencies">Agencias</Link>
             <Link to="/profile">Perfil</Link>
             <a href="/#/admin/login">Panel</a>
           </nav>
@@ -42,8 +39,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/explore" element={<Explore/>} />
         <Route path="/profile" element={<Profile/>} />
         <Route path="/activity/:id" element={<ActivityPublic/>} />
-        <Route path="/agencies" element={<AgencyRegister/>} />
-        <Route path="/agencies/verify/:id" element={<AgencyVerify/>} />
         <Route path="/admin/login" element={<AdminLogin/>} />
         <Route path="/admin/activities" element={<AdminActivities/>} />
       </Routes>

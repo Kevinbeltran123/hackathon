@@ -3,6 +3,11 @@ import express from 'express';
 import cors from 'cors';
 import db from './db.js';
 import { distanceMeters, withinWindow, scoreActivity } from './utils.js';
+import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
+import qrcode from 'qrcode';
+import fs from 'fs';
+import path from 'path';
 
 const app = express();
 app.use(cors());
@@ -132,6 +137,106 @@ app.get('/api/activity/:id', (req, res) => {
   `).get(id);
   if (!row) return res.status(404).json({error:'not found'});
   res.json(row);
+});
+
+// Agency verification system
+// In-memory agencies database (in production, use a real database)
+const agencies = [];
+
+// Generate a unique certificate
+function generateCertificate() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+// Agency registration endpoint
+app.post('/api/agencies/register', (req, res) => {
+  try {
+    const { nombre, nit, rnt } = req.body;
+    
+    if (!nombre || !nit || !rnt) {
+      return res.status(400).json({ error: 'Faltan campos obligatorios: nombre, nit, rnt' });
+    }
+    
+    // Check if agency with same NIT already exists
+    const existingAgency = agencies.find(a => a.nit === nit);
+    if (existingAgency) {
+      return res.status(409).json({ error: 'Ya existe una agencia registrada con este NIT' });
+    }
+    
+    // Create new agency
+    const agencyId = uuidv4();
+    const certificado = generateCertificate();
+    
+    const newAgency = {
+      id: agencyId,
+      nombre,
+      nit,
+      rnt,
+      certificado,
+      estado: 'verificada',
+      fecha_registro: new Date().toISOString()
+    };
+    
+    agencies.push(newAgency);
+    
+    // Generate QR code
+    const verificationUrl = `http://localhost:5173/agencies/verify/${agencyId}`;
+    
+    qrcode.toDataURL(verificationUrl, (err, qrDataUrl) => {
+      if (err) {
+        console.error('Error generating QR:', err);
+      }
+      
+      res.status(201).json({
+        mensaje: 'Agencia registrada exitosamente',
+        id: agencyId,
+        nombre,
+        nit,
+        rnt,
+        certificado,
+        estado: 'verificada',
+        qr_url: qrDataUrl,
+        verification_url: verificationUrl
+      });
+    });
+    
+  } catch (error) {
+    console.error('Error registering agency:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// Agency verification endpoint
+app.get('/api/agencies/verify/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const agency = agencies.find(a => a.id === id);
+    
+    if (!agency) {
+      return res.status(404).json({ error: 'Agencia no encontrada' });
+    }
+    
+    res.json(agency);
+    
+  } catch (error) {
+    console.error('Error verifying agency:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// List all agencies (for testing)
+app.get('/api/agencies', (req, res) => {
+  res.json({
+    total: agencies.length,
+    agencies: agencies.map(a => ({
+      id: a.id,
+      nombre: a.nombre,
+      nit: a.nit,
+      rnt: a.rnt,
+      estado: a.estado,
+      fecha_registro: a.fecha_registro
+    }))
+  });
 });
 
 // Health

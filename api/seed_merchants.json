@@ -1,0 +1,12 @@
+[
+  {
+    "email": "artesano@demo.com",
+    "password_hash": "demo123",
+    "place_name": "Taller de Tiples y Bandolas"
+  },
+  {
+    "email": "cafe@demo.com",
+    "password_hash": "demo123",
+    "place_name": "Café de Especialidad A"
+  }
+]

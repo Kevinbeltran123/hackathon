@@ -1,0 +1,112 @@
+[
+  {
+    "place_name": "Café de Especialidad A",
+    "title": "Cata de café express",
+    "duration": 20,
+    "time_start": "09:00",
+    "time_end": "18:00",
+    "capacity": 8,
+    "active": 1,
+    "benefit_text": "2x1 en espresso"
+  },
+  {
+    "place_name": "Café de Especialidad B",
+    "title": "Arte latte en 15 min",
+    "duration": 15,
+    "time_start": "09:00",
+    "time_end": "18:00",
+    "capacity": 6,
+    "active": 1,
+    "benefit_text": "10% en capuchino"
+  },
+  {
+    "place_name": "Taller de Tiples y Bandolas",
+    "title": "Mini taller: arma un tiple",
+    "duration": 25,
+    "time_start": "10:00",
+    "time_end": "17:00",
+    "capacity": 5,
+    "active": 1,
+    "benefit_text": "Foto con instrumento"
+  },
+  {
+    "place_name": "Sombrerería Tradicional",
+    "title": "Prueba tu sombrero tolimense",
+    "duration": 15,
+    "time_start": "10:00",
+    "time_end": "18:00",
+    "capacity": 3,
+    "active": 1,
+    "benefit_text": "5% en compra"
+  },
+  {
+    "place_name": "Tejidos La Pola",
+    "title": "Demo de bordado",
+    "duration": 20,
+    "time_start": "10:00",
+    "time_end": "17:00",
+    "capacity": 4,
+    "active": 1,
+    "benefit_text": "Marcador textil de regalo"
+  },
+  {
+    "place_name": "Cerámica Belén",
+    "title": "Moldes express de arcilla",
+    "duration": 20,
+    "time_start": "10:00",
+    "time_end": "16:00",
+    "capacity": 4,
+    "active": 1,
+    "benefit_text": "Foto souvenir"
+  },
+  {
+    "place_name": "Lechonería Tradicional 1",
+    "title": "Bocado de lechona + historia",
+    "duration": 15,
+    "time_start": "11:00",
+    "time_end": "15:00",
+    "capacity": 10,
+    "active": 1,
+    "benefit_text": "Bebida pequeña"
+  },
+  {
+    "place_name": "Restaurante de Tamales",
+    "title": "Tamaleo exprés",
+    "duration": 20,
+    "time_start": "07:00",
+    "time_end": "12:00",
+    "capacity": 12,
+    "active": 1,
+    "benefit_text": "Salsas artesanales"
+  },
+  {
+    "place_name": "Heladería Artesanal",
+    "title": "Degustación 3 sabores",
+    "duration": 15,
+    "time_start": "12:00",
+    "time_end": "19:00",
+    "capacity": 8,
+    "active": 1,
+    "benefit_text": "Topping gratis"
+  },
+  {
+    "place_name": "Museo de Arte del Tolima",
+    "title": "Obra destacada en 15 min",
+    "duration": 15,
+    "time_start": "10:00",
+    "time_end": "17:00",
+    "capacity": 15,
+    "active": 1,
+    "benefit_text": "Sticker del museo"
+  },
+  {
+    "place_name": "Parque Centenario",
+    "title": "Foto folclórica",
+    "duration": 15,
+    "time_start": "10:00",
+    "time_end": "18:00",
+    "capacity": 20,
+    "active": 1,
+    "benefit_text": "Sello de barrio"
+  }
+]

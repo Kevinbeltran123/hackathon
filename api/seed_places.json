@@ -1,0 +1,222 @@
+[
+  {
+    "name": "Conservatorio del Tolima",
+    "lat": 4.43962,
+    "lng": -75.20298,
+    "barrio": "Centro Musical",
+    "tags": "cultura,musica",
+    "base_duration": 30,
+    "price_level": 1,
+    "rating": 4.8
+  },
+  {
+    "name": "Teatro Tolima",
+    "lat": 4.43884,
+    "lng": -75.20396,
+    "barrio": "Centro Musical",
+    "tags": "cultura,teatro",
+    "base_duration": 30,
+    "price_level": 1,
+    "rating": 4.7
+  },
+  {
+    "name": "Plaza de Bolívar",
+    "lat": 4.43991,
+    "lng": -75.20497,
+    "barrio": "Centro",
+    "tags": "cultura,historia",
+    "base_duration": 20,
+    "price_level": 1,
+    "rating": 4.6
+  },
+  {
+    "name": "Museo de Arte del Tolima",
+    "lat": 4.43484,
+    "lng": -75.2124,
+    "barrio": "La Pola",
+    "tags": "cultura,museo",
+    "base_duration": 40,
+    "price_level": 2,
+    "rating": 4.7
+  },
+  {
+    "name": "Catedral Inmaculada Concepción",
+    "lat": 4.43967,
+    "lng": -75.20581,
+    "barrio": "Centro",
+    "tags": "cultura,historia",
+    "base_duration": 20,
+    "price_level": 1,
+    "rating": 4.6
+  },
+  {
+    "name": "Parque Murillo Toro",
+    "lat": 4.43795,
+    "lng": -75.20517,
+    "barrio": "Centro",
+    "tags": "cultura,parque",
+    "base_duration": 20,
+    "price_level": 1,
+    "rating": 4.5
+  },
+  {
+    "name": "Barrio La Pola (Mirador)",
+    "lat": 4.4341,
+    "lng": -75.2095,
+    "barrio": "La Pola",
+    "tags": "cultura,mirador",
+    "base_duration": 25,
+    "price_level": 1,
+    "rating": 4.6
+  },
+  {
+    "name": "Panóptico de Ibagué",
+    "lat": 4.43245,
+    "lng": -75.20595,
+    "barrio": "Belén",
+    "tags": "cultura,historia",
+    "base_duration": 30,
+    "price_level": 1,
+    "rating": 4.6
+  },
+  {
+    "name": "Lechonería Tradicional 1",
+    "lat": 4.4412,
+    "lng": -75.2074,
+    "barrio": "Centro",
+    "tags": "gastro,lechona",
+    "base_duration": 30,
+    "price_level": 2,
+    "rating": 4.5
+  },
+  {
+    "name": "Lechonería Tradicional 2",
+    "lat": 4.4415,
+    "lng": -75.2062,
+    "barrio": "Centro",
+    "tags": "gastro,lechona",
+    "base_duration": 30,
+    "price_level": 2,
+    "rating": 4.4
+  },
+  {
+    "name": "Café de Especialidad A",
+    "lat": 4.4382,
+    "lng": -75.2075,
+    "barrio": "Centro Musical",
+    "tags": "gastro,cafe",
+    "base_duration": 25,
+    "price_level": 2,
+    "rating": 4.7
+  },
+  {
+    "name": "Café de Especialidad B",
+    "lat": 4.4369,
+    "lng": -75.2082,
+    "barrio": "Centro",
+    "tags": "gastro,cafe",
+    "base_duration": 25,
+    "price_level": 2,
+    "rating": 4.6
+  },
+  {
+    "name": "Heladería Artesanal",
+    "lat": 4.4405,
+    "lng": -75.2065,
+    "barrio": "Centro",
+    "tags": "gastro,postres",
+    "base_duration": 20,
+    "price_level": 1,
+    "rating": 4.4
+  },
+  {
+    "name": "Restaurante de Tamales",
+    "lat": 4.4375,
+    "lng": -75.2097,
+    "barrio": "Centro",
+    "tags": "gastro,tamales",
+    "base_duration": 30,
+    "price_level": 2,
+    "rating": 4.5
+  },
+  {
+    "name": "Taller de Tiples y Bandolas",
+    "lat": 4.4402,
+    "lng": -75.2099,
+    "barrio": "Centro Musical",
+    "tags": "artesania,musica",
+    "base_duration": 20,
+    "price_level": 1,
+    "rating": 4.8
+  },
+  {
+    "name": "Sombrerería Tradicional",
+    "lat": 4.438,
+    "lng": -75.2108,
+    "barrio": "Centro",
+    "tags": "artesania,moda",
+    "base_duration": 20,
+    "price_level": 1,
+    "rating": 4.5
+  },
+  {
+    "name": "Tejidos La Pola",
+    "lat": 4.4356,
+    "lng": -75.2119,
+    "barrio": "La Pola",
+    "tags": "artesania,textil",
+    "base_duration": 25,
+    "price_level": 1,
+    "rating": 4.6
+  },
+  {
+    "name": "Cerámica Belén",
+    "lat": 4.4337,
+    "lng": -75.2069,
+    "barrio": "Belén",
+    "tags": "artesania,ceramica",
+    "base_duration": 25,
+    "price_level": 1,
+    "rating": 4.5
+  },
+  {
+    "name": "Jardín Botánico San Jorge",
+    "lat": 4.4283,
+    "lng": -75.231,
+    "barrio": "San Jorge",
+    "tags": "naturaleza,parque",
+    "base_duration": 60,
+    "price_level": 2,
+    "rating": 4.7
+  },
+  {
+    "name": "Parque Centenario",
+    "lat": 4.4417,
+    "lng": -75.2078,
+    "barrio": "Centro",
+    "tags": "naturaleza,parque",
+    "base_duration": 25,
+    "price_level": 1,
+    "rating": 4.4
+  },
+  {
+    "name": "Mirador Urbano A",
+    "lat": 4.4452,
+    "lng": -75.2053,
+    "barrio": "Centro",
+    "tags": "naturaleza,mirador",
+    "base_duration": 20,
+    "price_level": 1,
+    "rating": 4.3
+  },
+  {
+    "name": "Sendero Urbano B",
+    "lat": 4.4461,
+    "lng": -75.2109,
+    "barrio": "Centro",
+    "tags": "naturaleza,sendero",
+    "base_duration": 30,
+    "price_level": 1,
+    "rating": 4.2
+  }
+]

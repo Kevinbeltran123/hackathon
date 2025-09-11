@@ -1,0 +1,9 @@
+{
+  "name": "Rutas VIVAS Tolima",
+  "short_name": "RutasVIVAS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#FFB020",
+  "icons": []
+}

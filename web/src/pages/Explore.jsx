@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import '../styles/missions.css'
 import '../styles/routes.css'
+import '../styles/filters.css'
 import { getPlaces, getActivities, postCheckin } from '../lib/api.js'
 import { usePrefs, useRoute } from '../store/store.js'
 import TourGuideChat from '../components/TourGuideChat.jsx'
@@ -10,14 +11,33 @@ import MissionsBadge from '../components/MissionsBadge.jsx'
 import MissionsPanel from '../components/MissionsPanel.jsx'
 import MissionNotifications, { useMissionNotificationSender } from '../components/MissionNotifications.jsx'
 import RouteManager from '../components/RouteManager.jsx'
+import AdvancedFilterPanel from '../components/AdvancedFilterPanel.jsx'
+import RadiusCircle from '../components/RadiusCircle.jsx'
+import CategorizedMarkers from '../components/CategorizedMarkers.jsx'
+
+const IBAGUE_CENTER = { lat: 4.4399, lng: -75.2050 }; // Coordenadas fijas del centro de Ibagué
 
 export default function Explore(){
   const { prefs } = usePrefs()
   const { items, addItem, removeAt } = useRoute()
-  const [center, setCenter] = useState({lat:4.4399, lng:-75.2050}) // centro de Ibagué
+  const [center] = useState(IBAGUE_CENTER) // Centro fijo de Ibagué
   const [places, setPlaces] = useState([])
+  const [filteredPlaces, setFilteredPlaces] = useState([])
   const [cands, setCands] = useState([])
   const [timeLeft, setTimeLeft] = useState(prefs.time)
+  
+  // Estados para el sistema de filtrado avanzado
+  const [showFilterPanel, setShowFilterPanel] = useState(false)
+  const [activeFilters, setActiveFilters] = useState(() => {
+    const saved = localStorage.getItem('rutasVivas_filters')
+    return saved ? JSON.parse(saved) : {
+      interests: ['gastro', 'cultura'],
+      time: 3,
+      radius: 2000,
+      center: IBAGUE_CENTER
+    }
+  })
+  const [showRadiusCircle, setShowRadiusCircle] = useState(false)
   
   // Estados del sistema de misiones
   const [userId] = useState(() => {
@@ -32,16 +52,55 @@ export default function Explore(){
   const [showMissionsPanel, setShowMissionsPanel] = useState(false);
   const { sendCompletionNotifications } = useMissionNotificationSender();
 
-  useEffect(()=>{
-    navigator.geolocation.getCurrentPosition(
-      (pos)=> setCenter({lat: pos.coords.latitude, lng: pos.coords.longitude}),
-      ()=> {}
-    )
-  },[])
+  // Aplicar filtros iniciales al cargar
+  useEffect(() => {
+    applyAdvancedFilters(activeFilters);
+  }, []);
 
+  // Cargar lugares usando el sistema de filtros avanzado
+  const applyAdvancedFilters = async (filters) => {
+    try {
+      const response = await fetch('/api/places/filtered', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          interests: filters.interests,
+          time: filters.time,
+          radius: filters.radius,
+          lat: IBAGUE_CENTER.lat,
+          lng: IBAGUE_CENTER.lng
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFilteredPlaces(data.places || []);
+        setActiveFilters(filters);
+        setShowRadiusCircle(true);
+        
+        // Actualizar tiempo basado en estimación
+        if (data.estimatedTime) {
+          setTimeLeft(Math.max(0, filters.time * 60 - data.estimatedTime));
+        }
+      }
+    } catch (error) {
+      console.error('Error applying filters:', error);
+      // Fallback al sistema anterior
+      getPlaces({
+        lat: center.lat, 
+        lng: center.lng, 
+        tags: activeFilters.interests.join(','), 
+        radius: activeFilters.radius
+      }).then(setPlaces);
+    }
+  };
+
+  // Mantener compatibilidad con el sistema anterior
   useEffect(()=>{
-    getPlaces({lat:center.lat, lng:center.lng, tags: prefs.tags.join(','), radius: prefs.radius}).then(setPlaces)
-  }, [center, prefs])
+    if (filteredPlaces.length === 0) {
+      getPlaces({lat:center.lat, lng:center.lng, tags: prefs.tags.join(','), radius: prefs.radius}).then(setPlaces)
+    }
+  }, [center, prefs, filteredPlaces.length])
 
   // Hacer removeAt disponible globalmente para RouteManager
   useEffect(() => {
@@ -59,6 +118,29 @@ export default function Explore(){
     addItem({ type:'activity', id:a.id, title:a.title, place_id:a.place_id, place_name:a.place_name, duration:a.duration, lat:a.lat, lng:a.lng })
     setTimeLeft(t => Math.max(0, t - a.duration - 10)) // -10 min caminata simplificada
   }
+
+  // Manejar clics en marcadores categorizados
+  const handleCategorizedPlaceClick = (place, action = 'view') => {
+    if (action === 'add') {
+      // Agregar lugar directamente al timeline
+      addItem({
+        type: 'place',
+        id: place.id,
+        title: place.name,
+        name: place.name,
+        place_id: place.id,
+        place_name: place.name,
+        duration: place.base_duration || 30,
+        lat: place.lat,
+        lng: place.lng,
+        barrio: place.barrio,
+        tags: place.tags
+      });
+      
+      // Actualizar tiempo disponible
+      setTimeLeft(t => Math.max(0, t - (place.base_duration || 30) - 10));
+    }
+  };
 
   // Función para hacer check-in con misiones
   async function handleCheckIn(placeId, activityId = null) {
@@ -88,11 +170,27 @@ export default function Explore(){
   return (
     <div className="grid lg:grid-cols-3 h-[calc(100vh-120px)] relative">
       <div className="lg:col-span-2">
-        <MapContainer center={[center.lat, center.lng]} zoom={15} style={{height:'100%'}}>
+        <MapContainer center={[center.lat, center.lng]} zoom={14} style={{height:'100%'}}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <RouteManager items={items} />
+          
+          {/* Círculo de radio de caminata */}
+          <RadiusCircle 
+            center={IBAGUE_CENTER} 
+            radius={activeFilters.radius} 
+            visible={showRadiusCircle} 
+          />
+          
+          {/* Marcadores categorizados con filtros aplicados */}
+          <CategorizedMarkers 
+            places={filteredPlaces} 
+            onPlaceClick={handleCategorizedPlaceClick}
+            selectedInterests={activeFilters.interests}
+          />
+          
+          {/* Marcadores tradicionales (fallback) */}
           {places.map(p => (
-            <Marker key={p.id} position={[p.lat,p.lng]}>
+            <Marker key={`traditional-${p.id}`} position={[p.lat,p.lng]}>
               <Popup>
                 <div className="text-sm">
                   <div className="font-semibold">{p.name}</div>
@@ -115,12 +213,37 @@ export default function Explore(){
       </div>
       <div className="bg-white border-l p-3 overflow-auto">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold">Timeline</h3>
+          <h3 className="font-semibold">Mi Ruta</h3>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowFilterPanel(true)}
+              className="px-2 py-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs rounded-lg hover:shadow-lg transition-all duration-200 flex items-center gap-1"
+              title="Personalizar experiencia"
+            >
+              <span>🎯</span>
+              <span>Filtros</span>
+            </button>
             <MissionsBadge 
               userId={userId} 
               onClick={() => setShowMissionsPanel(true)} 
             />
+          </div>
+        </div>
+        
+        {/* Resumen de filtros activos */}
+        <div className="mb-3 p-2 bg-blue-50 rounded-lg text-xs">
+          <div className="font-medium text-blue-800 mb-1">
+            📍 Desde Centro de Ibagué • {activeFilters.radius/1000}km radio
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {activeFilters.interests.map(interest => (
+              <span key={interest} className="px-1.5 py-0.5 bg-blue-200 text-blue-800 rounded text-xs">
+                {interest}
+              </span>
+            ))}
+          </div>
+          <div className="text-blue-600 mt-1">
+            ⏰ {activeFilters.time}h disponible • {filteredPlaces.length} lugares encontrados
           </div>
         </div>
         
@@ -187,6 +310,23 @@ export default function Explore(){
       
       {/* Mission Notifications */}
       <MissionNotifications />
+      
+      {/* Advanced Filter Panel */}
+      <AdvancedFilterPanel
+        isOpen={showFilterPanel}
+        onClose={() => setShowFilterPanel(false)}
+        onFiltersApply={applyAdvancedFilters}
+        initialFilters={activeFilters}
+      />
+      
+      {/* Floating Filter Button for Mobile */}
+      <button
+        onClick={() => setShowFilterPanel(true)}
+        className="floating-filter-btn lg:hidden"
+        title="Personalizar experiencia turística"
+      >
+        <span>🎯</span>
+      </button>
     </div>
   )
 }

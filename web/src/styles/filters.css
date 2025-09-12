@@ -1,0 +1,511 @@
+/* Estilos para el sistema de filtros avanzados */
+
+.filter-section {
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.filter-section::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #E5E7EB, transparent);
+}
+
+.filter-section:last-child::after {
+  display: none;
+}
+
+/* Animaciones para los botones de filtro */
+.filter-button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}
+
+.filter-button:hover {
+  transform: translateY(-1px);
+}
+
+.filter-button:active {
+  transform: translateY(0);
+}
+
+/* Estilos para el selector de radio visual */
+.radio-selector {
+  position: relative;
+  overflow: hidden;
+}
+
+.radio-option {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.radio-option::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+  transform: translateY(-50%);
+  transition: width 0.3s ease;
+}
+
+.radio-option.selected::before {
+  width: 100%;
+}
+
+/* Gradientes para los diferentes tipos de interés */
+.interest-gastro {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  border-color: #F59E0B;
+}
+
+.interest-cultura {
+  background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%);
+  border-color: #8B5CF6;
+}
+
+.interest-shopping {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FBBF24 100%);
+  border-color: #F59E0B;
+}
+
+.interest-naturaleza {
+  background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+  border-color: #10B981;
+}
+
+.interest-recreacion {
+  background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+  border-color: #3B82F6;
+}
+
+.interest-servicios {
+  background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+  border-color: #6B7280;
+}
+
+/* Indicador de tiempo dinámico */
+.time-indicator {
+  position: relative;
+  overflow: hidden;
+}
+
+.time-indicator::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #10B981, #059669);
+  transition: width 0.3s ease;
+}
+
+.time-1::after { width: 20%; }
+.time-2::after { width: 40%; }
+.time-3::after { width: 60%; }
+.time-4::after { width: 80%; }
+.time-8::after { width: 100%; }
+
+/* Círculo de radio con pulso */
+.radius-circle {
+  animation: radiusPulse 2s infinite;
+}
+
+@keyframes radiusPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+/* Efectos de hover mejorados */
+.filter-card {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.filter-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transition: left 0.5s ease;
+}
+
+.filter-card:hover::before {
+  left: 100%;
+}
+
+.filter-card:hover {
+  box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.15);
+}
+
+/* Indicadores de carga */
+.loading-dots {
+  display: inline-block;
+}
+
+.loading-dots::after {
+  content: '';
+  animation: loadingDots 1.5s infinite;
+}
+
+@keyframes loadingDots {
+  0%, 33% { content: '.'; }
+  34%, 66% { content: '..'; }
+  67%, 100% { content: '...'; }
+}
+
+/* Panel de vista previa */
+.preview-card {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.preview-stat {
+  position: relative;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.preview-stat::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.preview-stat.places::before { background: #3B82F6; }
+.preview-stat.time::before { background: #10B981; }
+.preview-stat.distance::before { background: #F59E0B; }
+
+/* Botón flotante mejorado */
+.floating-filter-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 40;
+  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 8px 25px -8px rgba(59, 130, 246, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-filter-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px -8px rgba(59, 130, 246, 0.6);
+}
+
+.floating-filter-btn:active {
+  transform: translateY(0);
+}
+
+.floating-filter-btn::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6, #EC4899);
+  mask: linear-gradient(white 0 0) content-box, linear-gradient(white 0 0);
+  mask-composite: subtract;
+  animation: rotateBorder 3s linear infinite;
+}
+
+@keyframes rotateBorder {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Estilos para marcadores categorizados */
+.category-marker-container {
+  background: transparent !important;
+  border: none !important;
+}
+
+.category-marker {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.category-marker:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+}
+
+.category-marker.highlighted {
+  animation: markerPulse 2s infinite;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+}
+
+.category-emoji {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.verified-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #10B981;
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: bold;
+  border: 1px solid white;
+}
+
+.highlight-ring {
+  position: absolute;
+  inset: -4px;
+  border: 2px solid #3B82F6;
+  border-radius: 50%;
+  animation: ringPulse 2s infinite;
+}
+
+@keyframes markerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes ringPulse {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+
+/* Estilos para popups categorizados */
+.category-popup .leaflet-popup-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 300px !important;
+}
+
+.category-popup-content {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid #E5E7EB;
+  background: #F9FAFB;
+}
+
+.category-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.verified-popup-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #10B981;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.place-info {
+  padding: 12px;
+}
+
+.place-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1F2937;
+  margin: 0 0 8px 0;
+}
+
+.place-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.detail-icon {
+  font-size: 12px;
+  width: 14px;
+}
+
+.place-description {
+  font-size: 13px;
+  color: #4B5563;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  padding: 8px;
+  background: #F9FAFB;
+  border-radius: 6px;
+}
+
+.popup-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.popup-tag {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 500;
+  border: 1px solid;
+  transition: all 0.2s ease;
+}
+
+.popup-tag.selected {
+  font-weight: 600;
+}
+
+.popup-actions {
+  border-top: 1px solid #E5E7EB;
+  padding-top: 8px;
+}
+
+.add-to-route-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-to-route-btn:hover {
+  background: linear-gradient(135deg, #2563EB, #1E40AF);
+  transform: translateY(-1px);
+}
+
+/* Estilos para círculo de radio */
+.radius-circle {
+  pointer-events: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .filter-section {
+    padding-bottom: 0.75rem;
+  }
+  
+  .floating-filter-btn {
+    width: 56px;
+    height: 56px;
+    bottom: 20px;
+    right: 20px;
+    font-size: 20px;
+  }
+  
+  .preview-stat {
+    padding: 0.5rem;
+  }
+  
+  .category-popup .leaflet-popup-content {
+    width: 280px !important;
+  }
+  
+  .category-marker {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .category-emoji {
+    font-size: 14px;
+  }
+}
+
+/* Smooth scrolling for the panel */
+.filter-panel-content {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+
+.filter-panel-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.filter-panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.filter-panel-content::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 2px;
+}
+
+.filter-panel-content::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}

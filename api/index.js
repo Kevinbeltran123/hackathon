@@ -688,6 +688,166 @@ app.post('/api/user/:userId/missions/trigger', (req, res) => {
   }
 });
 
+// Advanced filtering endpoint
+app.post('/api/places/filtered', (req, res) => {
+  try {
+    const { interests = [], time = 3, radius = 2000, lat, lng } = req.body;
+    
+    if (!lat || !lng) {
+      return res.status(400).json({ error: 'Latitude and longitude are required' });
+    }
+
+    const center = { lat: parseFloat(lat), lng: parseFloat(lng) };
+    
+    // Get all places from database
+    const allPlaces = db.prepare('SELECT * FROM place').all();
+    
+    // Convert tags from string to array for each place
+    const placesWithTags = allPlaces.map(place => ({
+      ...place,
+      tags: parseTags(place.tags)
+    }));
+
+    // Filter by interests (categories)
+    let filteredPlaces = placesWithTags;
+    if (interests.length > 0) {
+      const interestSet = new Set(interests);
+      filteredPlaces = placesWithTags.filter(place => 
+        place.tags.some(tag => interestSet.has(tag))
+      );
+    }
+
+    // Filter by radius
+    filteredPlaces = filteredPlaces
+      .map(place => ({
+        ...place,
+        distance: distanceMeters(center, { lat: place.lat, lng: place.lng })
+      }))
+      .filter(place => place.distance <= radius);
+
+    // Calculate scoring based on distance, rating, and relevance
+    filteredPlaces = filteredPlaces.map(place => {
+      let score = 0;
+      
+      // Distance score (closer is better, max 40 points)
+      const distanceScore = Math.max(0, 40 - (place.distance / radius) * 40);
+      score += distanceScore;
+      
+      // Rating score (max 30 points)
+      const ratingScore = ((place.rating || 4.0) / 5.0) * 30;
+      score += ratingScore;
+      
+      // Interest relevance score (max 30 points)
+      const matchingInterests = place.tags.filter(tag => interests.includes(tag)).length;
+      const relevanceScore = interests.length > 0 ? (matchingInterests / interests.length) * 30 : 15;
+      score += relevanceScore;
+      
+      // Bonus for verified places
+      if (place.verified) {
+        score += 5;
+      }
+
+      return { ...place, score };
+    });
+
+    // Sort by score (highest first)
+    filteredPlaces.sort((a, b) => b.score - a.score);
+
+    // Optimize number of places based on available time
+    const timeMultiplier = {
+      1: 3,   // 1 hour -> max 3 places
+      2: 5,   // 2 hours -> max 5 places
+      3: 8,   // 3 hours -> max 8 places
+      4: 12,  // 4 hours -> max 12 places
+      8: 20   // Full day -> max 20 places
+    };
+
+    const maxPlaces = timeMultiplier[time] || 8;
+    
+    // Ensure diversity of categories if possible
+    const optimizedPlaces = diversifyPlaces(filteredPlaces.slice(0, maxPlaces * 2), interests, maxPlaces);
+
+    // Calculate estimated total time
+    const estimatedTime = optimizedPlaces.reduce((total, place) => {
+      return total + (place.base_duration || 30); // Default 30 min if not specified
+    }, 0);
+
+    // Add walking time between places (estimated 2 min per 100m)
+    const walkingTime = optimizedPlaces.reduce((total, place, index) => {
+      if (index === 0) return total;
+      const prevPlace = optimizedPlaces[index - 1];
+      const walkDistance = distanceMeters(
+        { lat: prevPlace.lat, lng: prevPlace.lng },
+        { lat: place.lat, lng: place.lng }
+      );
+      return total + Math.ceil(walkDistance / 100) * 2; // 2 min per 100m
+    }, 0);
+
+    const totalEstimatedTime = estimatedTime + walkingTime;
+    
+    // Calculate average distance from center
+    const avgDistance = optimizedPlaces.length > 0 
+      ? optimizedPlaces.reduce((sum, p) => sum + p.distance, 0) / optimizedPlaces.length / 1000
+      : 0;
+
+    res.json({
+      places: optimizedPlaces,
+      totalPlaces: optimizedPlaces.length,
+      estimatedTime: totalEstimatedTime,
+      avgDistance,
+      filters: { interests, time, radius },
+      center
+    });
+
+  } catch (error) {
+    console.error('Advanced filtering error:', error);
+    res.status(500).json({ error: 'Filtering failed', details: error.message });
+  }
+});
+
+// Helper function to diversify places by category
+function diversifyPlaces(places, interests, maxPlaces) {
+  if (places.length <= maxPlaces) return places;
+  
+  const result = [];
+  const categoryCounts = {};
+  const maxPerCategory = Math.ceil(maxPlaces / interests.length) || 2;
+  
+  // Initialize category counts
+  interests.forEach(interest => {
+    categoryCounts[interest] = 0;
+  });
+  
+  // First pass: ensure at least one place per interest
+  for (const place of places) {
+    if (result.length >= maxPlaces) break;
+    
+    const placeInterests = place.tags.filter(tag => interests.includes(tag));
+    const canAdd = placeInterests.some(interest => 
+      categoryCounts[interest] < maxPerCategory
+    );
+    
+    if (canAdd) {
+      result.push(place);
+      placeInterests.forEach(interest => {
+        if (interests.includes(interest)) {
+          categoryCounts[interest]++;
+        }
+      });
+    }
+  }
+  
+  // Second pass: fill remaining slots with highest scored places
+  for (const place of places) {
+    if (result.length >= maxPlaces) break;
+    if (!result.find(p => p.id === place.id)) {
+      result.push(place);
+    }
+  }
+  
+  return result.slice(0, maxPlaces);
+}
+
 // Health
 app.get('/api/health', (req, res) => res.json({ ok:true }));
 

@@ -1,4 +1,5 @@
 
+import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import db from './db.js';
@@ -8,6 +9,14 @@ import crypto from 'crypto';
 import qrcode from 'qrcode';
 import fs from 'fs';
 import path from 'path';
+
+// Import new services
+import { geocodeAddress, reverseGeocode, validateLocation, searchPlacesByCategory, cleanExpiredCache } from './services/geocoding.js';
+import { getRouteData, calculateMultiPointRoute, optimizeRouteOrder, calculateWalkingTime } from './services/routing.js';
+import { validateLocationMiddleware, enrichLocationMiddleware, checkVerificationStatusMiddleware, validateActivityLocationMiddleware } from './middleware/locationValidation.js';
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 app.use(cors());
@@ -107,7 +116,7 @@ app.get('/api/me/activities', (req, res) => {
   res.json(list);
 });
 
-app.post('/api/me/activities', (req, res) => {
+app.post('/api/me/activities', validateActivityLocationMiddleware, (req, res) => {
   const auth = req.headers.authorization || '';
   if (!auth.includes('demo')) return res.status(401).json({error:'no auth'});
   const { place_id, title, duration, time_start, time_end, capacity, active, benefit_text } = req.body || {};
@@ -115,7 +124,7 @@ app.post('/api/me/activities', (req, res) => {
     INSERT INTO micro_activity (place_id, title, duration, time_start, time_end, capacity, active, benefit_text)
     VALUES (?,?,?,?,?,?,?,?)
   `).run(place_id, title, duration, time_start, time_end, capacity, active?1:0, benefit_text||null);
-  res.json({ id: info.lastInsertRowid });
+  res.json({ id: info.lastInsertRowid, verified_place: req.verifiedPlace?.name });
 });
 
 app.patch('/api/me/activities/:id/toggle', (req, res) => {
@@ -237,6 +246,255 @@ app.get('/api/agencies', (req, res) => {
       fecha_registro: a.fecha_registro
     }))
   });
+});
+
+// === NEW LOCATION SERVICES ===
+
+// Geocoding endpoints
+app.get('/api/geocode', async (req, res) => {
+  try {
+    const { address } = req.query;
+    if (!address) {
+      return res.status(400).json({ error: 'Address parameter is required' });
+    }
+
+    const results = await geocodeAddress(address);
+    res.json({ results, count: results.length });
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    res.status(500).json({ error: 'Geocoding failed', details: error.message });
+  }
+});
+
+app.get('/api/reverse-geocode', async (req, res) => {
+  try {
+    const { lat, lng } = req.query;
+    if (!lat || !lng) {
+      return res.status(400).json({ error: 'Latitude and longitude parameters are required' });
+    }
+
+    const result = await reverseGeocode(parseFloat(lat), parseFloat(lng));
+    res.json(result);
+  } catch (error) {
+    console.error('Reverse geocoding error:', error);
+    res.status(500).json({ error: 'Reverse geocoding failed', details: error.message });
+  }
+});
+
+// Location validation
+app.post('/api/validate-location', async (req, res) => {
+  try {
+    const { name, lat, lng } = req.body;
+    if (!lat || !lng) {
+      return res.status(400).json({ error: 'Latitude and longitude are required' });
+    }
+
+    const validation = await validateLocation(name, parseFloat(lat), parseFloat(lng));
+    res.json(validation);
+  } catch (error) {
+    console.error('Location validation error:', error);
+    res.status(500).json({ error: 'Location validation failed', details: error.message });
+  }
+});
+
+// Search places by category
+app.get('/api/search-places', async (req, res) => {
+  try {
+    const { category, limit } = req.query;
+    if (!category) {
+      return res.status(400).json({ error: 'Category parameter is required' });
+    }
+
+    const results = await searchPlacesByCategory(category, parseInt(limit) || 20);
+    res.json({ results, category, count: results.length });
+  } catch (error) {
+    console.error('Place search error:', error);
+    res.status(500).json({ error: 'Place search failed', details: error.message });
+  }
+});
+
+// Enhanced places endpoint with real location verification
+app.post('/api/places', validateLocationMiddleware, enrichLocationMiddleware, (req, res) => {
+  try {
+    const { name, lat, lng, barrio, tags, base_duration, price_level, rating } = req.body;
+    const enrichedData = req.body.enrichedData || {};
+
+    const stmt = db.prepare(`
+      INSERT INTO place (
+        name, lat, lng, barrio, tags, base_duration, price_level, rating,
+        address, google_place_id, osm_id, verified, verification_source, last_verified, business_type
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const info = stmt.run(
+      name,
+      parseFloat(lat),
+      parseFloat(lng),
+      barrio || null,
+      tags || null,
+      base_duration || 30,
+      price_level || 1,
+      rating || 4.3,
+      enrichedData.verified_address || null,
+      enrichedData.google_place_id || null,
+      enrichedData.osm_id || null,
+      req.locationValidation?.valid ? 1 : 0,
+      enrichedData.verification_source || null,
+      enrichedData.verified_at || null,
+      enrichedData.business_type || null
+    );
+
+    res.json({ 
+      id: info.lastInsertRowid, 
+      verified: req.locationValidation?.valid || false,
+      verification_source: enrichedData.verification_source 
+    });
+  } catch (error) {
+    console.error('Place creation error:', error);
+    res.status(500).json({ error: 'Failed to create place', details: error.message });
+  }
+});
+
+// Route calculation endpoints
+app.get('/api/route', async (req, res) => {
+  try {
+    const { from_lat, from_lng, to_lat, to_lng, mode } = req.query;
+    
+    if (!from_lat || !from_lng || !to_lat || !to_lng) {
+      return res.status(400).json({ error: 'All coordinate parameters are required' });
+    }
+
+    const routeData = await getRouteData(
+      parseFloat(from_lat),
+      parseFloat(from_lng),
+      parseFloat(to_lat),
+      parseFloat(to_lng),
+      mode || 'walking'
+    );
+
+    res.json(routeData);
+  } catch (error) {
+    console.error('Route calculation error:', error);
+    res.status(500).json({ error: 'Route calculation failed', details: error.message });
+  }
+});
+
+// Multi-point route optimization
+app.post('/api/optimize-route', async (req, res) => {
+  try {
+    const { waypoints, mode } = req.body;
+    
+    if (!waypoints || !Array.isArray(waypoints) || waypoints.length < 2) {
+      return res.status(400).json({ error: 'At least 2 waypoints are required' });
+    }
+
+    // Validate waypoint format
+    for (const wp of waypoints) {
+      if (!wp.lat || !wp.lng) {
+        return res.status(400).json({ error: 'Each waypoint must have lat and lng properties' });
+      }
+    }
+
+    const startPoint = waypoints[0];
+    const destinations = waypoints.slice(1);
+    
+    // Optimize order
+    const optimizedOrder = optimizeRouteOrder(startPoint, destinations);
+    const fullRoute = [startPoint, ...optimizedOrder];
+    
+    // Calculate route details
+    const routeDetails = await calculateMultiPointRoute(fullRoute, mode || 'walking');
+
+    res.json({
+      original_waypoints: waypoints,
+      optimized_waypoints: fullRoute,
+      route_details: routeDetails,
+      optimization_savings: {
+        original_order_estimate: waypoints.length * 10, // Rough estimate
+        optimized_duration: routeDetails.totalDuration
+      }
+    });
+  } catch (error) {
+    console.error('Route optimization error:', error);
+    res.status(500).json({ error: 'Route optimization failed', details: error.message });
+  }
+});
+
+// Get nearby verified places
+app.get('/api/nearby-verified', checkVerificationStatusMiddleware, (req, res) => {
+  try {
+    const { lat, lng, radius = 2000, verified_only = 'true' } = req.query;
+    
+    if (!lat || !lng) {
+      return res.status(400).json({ error: 'Latitude and longitude are required' });
+    }
+
+    const centerLat = parseFloat(lat);
+    const centerLng = parseFloat(lng);
+    const maxRadius = parseInt(radius);
+
+    let query = 'SELECT * FROM place';
+    let params = [];
+
+    if (verified_only === 'true') {
+      query += ' WHERE verified = 1';
+    }
+
+    const places = db.prepare(query).all(...params);
+    
+    // Filter by distance and add distance info
+    const nearby = places
+      .map(place => ({
+        ...place,
+        distance: distanceMeters({ lat: centerLat, lng: centerLng }, { lat: place.lat, lng: place.lng }),
+        walking_time: calculateWalkingTime(centerLat, centerLng, place.lat, place.lng)
+      }))
+      .filter(place => place.distance <= maxRadius)
+      .sort((a, b) => a.distance - b.distance);
+
+    res.json({
+      center: { lat: centerLat, lng: centerLng },
+      radius: maxRadius,
+      verified_only: verified_only === 'true',
+      count: nearby.length,
+      places: nearby.slice(0, 50) // Limit results
+    });
+  } catch (error) {
+    console.error('Nearby places error:', error);
+    res.status(500).json({ error: 'Failed to get nearby places', details: error.message });
+  }
+});
+
+// System maintenance endpoints
+app.post('/api/admin/clean-cache', (req, res) => {
+  try {
+    cleanExpiredCache();
+    res.json({ message: 'Cache cleaned successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to clean cache', details: error.message });
+  }
+});
+
+app.get('/api/admin/verification-stats', (req, res) => {
+  try {
+    const stats = {
+      total_places: db.prepare('SELECT COUNT(*) as count FROM place').get().count,
+      verified_places: db.prepare('SELECT COUNT(*) as count FROM place WHERE verified = 1').get().count,
+      unverified_places: db.prepare('SELECT COUNT(*) as count FROM place WHERE verified = 0').get().count,
+      cache_entries: db.prepare('SELECT COUNT(*) as count FROM location_cache').get().count
+    };
+
+    const verification_sources = db.prepare(`
+      SELECT verification_source, COUNT(*) as count 
+      FROM place 
+      WHERE verified = 1 AND verification_source IS NOT NULL 
+      GROUP BY verification_source
+    `).all();
+
+    res.json({ stats, verification_sources });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get stats', details: error.message });
+  }
 });
 
 // Health

@@ -12,13 +12,31 @@ db.exec(schema);
 const count = db.prepare('SELECT COUNT(*) as c FROM place').get().c;
 
 if (count === 0) {
-  const places = JSON.parse(fs.readFileSync('./seed_places.json', 'utf-8'));
+  // Use real Ibagué locations
+  const places = JSON.parse(fs.readFileSync('./seed_places_real.json', 'utf-8'));
   const insertPlace = db.prepare(`
-    INSERT INTO place (name, lat, lng, barrio, tags, base_duration, price_level, rating)
-    VALUES (@name, @lat, @lng, @barrio, @tags, @base_duration, @price_level, @rating)
+    INSERT INTO place (
+      name, lat, lng, barrio, tags, base_duration, price_level, rating,
+      address, verified, verification_source, business_type, description, phone
+    ) VALUES (
+      @name, @lat, @lng, @barrio, @tags, @base_duration, @price_level, @rating,
+      @address, @verified, @verification_source, @business_type, @description, @phone
+    )
   `);
   const insertMany = db.transaction((rows) => {
-    for (const r of rows) insertPlace.run(r);
+    for (const r of rows) {
+      // Ensure all required fields have default values
+      const place = {
+        ...r,
+        address: r.address || null,
+        verified: r.verified || 0,
+        verification_source: r.verification_source || null,
+        business_type: r.business_type || null,
+        description: r.description || null,
+        phone: r.phone || null
+      };
+      insertPlace.run(place);
+    }
   });
   insertMany(places);
 
@@ -26,7 +44,7 @@ if (count === 0) {
   const placeRows = db.prepare('SELECT id, name FROM place').all();
   const byName = Object.fromEntries(placeRows.map(r => [r.name, r.id]));
 
-  const acts = JSON.parse(fs.readFileSync('./seed_micro_activities.json', 'utf-8'));
+  const acts = JSON.parse(fs.readFileSync('./seed_micro_activities_real.json', 'utf-8'));
   const insertAct = db.prepare(`
     INSERT INTO micro_activity (place_id, title, duration, time_start, time_end, capacity, active, benefit_text)
     VALUES (@place_id, @title, @duration, @time_start, @time_end, @capacity, @active, @benefit_text)

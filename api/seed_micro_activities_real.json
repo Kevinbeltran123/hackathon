@@ -1,0 +1,312 @@
+[
+  {
+    "place_name": "Conservatorio del Tolima",
+    "title": "Concierto de estudiantes",
+    "duration": 30,
+    "time_start": "17:00",
+    "time_end": "19:00",
+    "capacity": 50,
+    "active": 1,
+    "benefit_text": "Disfruta música en vivo interpretada por estudiantes del conservatorio"
+  },
+  {
+    "place_name": "Conservatorio del Tolima",
+    "title": "Tour por las instalaciones musicales",
+    "duration": 20,
+    "time_start": "10:00",
+    "time_end": "16:00",
+    "capacity": 15,
+    "active": 1,
+    "benefit_text": "Conoce los estudios de grabación y aulas del conservatorio"
+  },
+  {
+    "place_name": "Teatro Tolima",
+    "title": "Visita guiada por el teatro histórico",
+    "duration": 25,
+    "time_start": "14:00",
+    "time_end": "17:00",
+    "capacity": 20,
+    "active": 1,
+    "benefit_text": "Descubre la historia y arquitectura del principal teatro de Ibagué"
+  },
+  {
+    "place_name": "Plaza de Bolívar",
+    "title": "Caminata histórica por la plaza",
+    "duration": 15,
+    "time_start": "09:00",
+    "time_end": "18:00",
+    "capacity": 30,
+    "active": 1,
+    "benefit_text": "Aprende sobre la historia de la plaza principal de la ciudad"
+  },
+  {
+    "place_name": "Plaza de Bolívar",
+    "title": "Fotografía de aves urbanas",
+    "duration": 20,
+    "time_start": "06:00",
+    "time_end": "08:00",
+    "capacity": 10,
+    "active": 1,
+    "benefit_text": "Observa y fotografía las aves que habitan en el centro histórico"
+  },
+  {
+    "place_name": "Catedral Primada",
+    "title": "Visita arquitectónica guiada",
+    "duration": 20,
+    "time_start": "09:00",
+    "time_end": "17:00",
+    "capacity": 25,
+    "active": 1,
+    "benefit_text": "Conoce los detalles arquitectónicos e históricos de la catedral"
+  },
+  {
+    "place_name": "Museo de Arte del Tolima",
+    "title": "Exhibición de arte regional",
+    "duration": 30,
+    "time_start": "10:00",
+    "time_end": "17:00",
+    "capacity": 40,
+    "active": 1,
+    "benefit_text": "Explora obras de artistas tolimenses y colombianos"
+  },
+  {
+    "place_name": "Museo de Arte del Tolima",
+    "title": "Taller de apreciación artística",
+    "duration": 45,
+    "time_start": "15:00",
+    "time_end": "16:00",
+    "capacity": 15,
+    "active": 1,
+    "benefit_text": "Participa en un taller interactivo sobre arte y cultura"
+  },
+  {
+    "place_name": "Parque Centenario",
+    "title": "Ejercicio matutino en el parque",
+    "duration": 30,
+    "time_start": "06:00",
+    "time_end": "08:00",
+    "capacity": 20,
+    "active": 1,
+    "benefit_text": "Únete a la rutina de ejercicio al aire libre"
+  },
+  {
+    "place_name": "Parque Centenario",
+    "title": "Observación de flora urbana",
+    "duration": 25,
+    "time_start": "16:00",
+    "time_end": "18:00",
+    "capacity": 12,
+    "active": 1,
+    "benefit_text": "Identifica especies de plantas nativas en el entorno urbano"
+  },
+  {
+    "place_name": "Jardín Botánico San Jorge",
+    "title": "Recorrido por especies nativas",
+    "duration": 45,
+    "time_start": "09:00",
+    "time_end": "16:00",
+    "capacity": 25,
+    "active": 1,
+    "benefit_text": "Aprende sobre la biodiversidad del Tolima"
+  },
+  {
+    "place_name": "Jardín Botánico San Jorge",
+    "title": "Taller de plantas medicinales",
+    "duration": 30,
+    "time_start": "14:00",
+    "time_end": "16:00",
+    "capacity": 15,
+    "active": 1,
+    "benefit_text": "Conoce usos tradicionales de plantas medicinales regionales"
+  },
+  {
+    "place_name": "Panóptico de Ibagué",
+    "title": "Tour por la historia carcelaria",
+    "duration": 25,
+    "time_start": "10:00",
+    "time_end": "16:00",
+    "capacity": 20,
+    "active": 1,
+    "benefit_text": "Descubre la fascinante historia del antiguo sistema carcelario"
+  },
+  {
+    "place_name": "Centro Comercial La Estación",
+    "title": "Degustación de café regional",
+    "duration": 20,
+    "time_start": "10:00",
+    "time_end": "20:00",
+    "capacity": 15,
+    "active": 1,
+    "benefit_text": "Prueba los mejores cafés del Tolima en un ambiente histórico"
+  },
+  {
+    "place_name": "Centro Comercial La Estación",
+    "title": "Compras de artesanías locales",
+    "duration": 30,
+    "time_start": "10:00",
+    "time_end": "21:00",
+    "capacity": 25,
+    "active": 1,
+    "benefit_text": "Encuentra auténticas artesanías tolimenses"
+  },
+  {
+    "place_name": "Mercado Tradicional La 21",
+    "title": "Tour gastronómico regional",
+    "duration": 40,
+    "time_start": "08:00",
+    "time_end": "14:00",
+    "capacity": 12,
+    "active": 1,
+    "benefit_text": "Prueba tamales, sancocho y otros platos típicos del Tolima"
+  },
+  {
+    "place_name": "Mercado Tradicional La 21",
+    "title": "Compra de frutas tropicales",
+    "duration": 15,
+    "time_start": "07:00",
+    "time_end": "17:00",
+    "capacity": 20,
+    "active": 1,
+    "benefit_text": "Descubre frutas exóticas de la región tolimense"
+  },
+  {
+    "place_name": "Universidad del Tolima",
+    "title": "Visita al campus universitario",
+    "duration": 30,
+    "time_start": "08:00",
+    "time_end": "17:00",
+    "capacity": 30,
+    "active": 1,
+    "benefit_text": "Conoce las instalaciones de la principal universidad regional"
+  },
+  {
+    "place_name": "Estadio Manuel Murillo Toro",
+    "title": "Tour por el estadio histórico",
+    "duration": 25,
+    "time_start": "14:00",
+    "time_end": "16:00",
+    "capacity": 25,
+    "active": 1,
+    "benefit_text": "Recorre el estadio casa del Deportes Tolima"
+  },
+  {
+    "place_name": "Mirador Cerro de San Javier",
+    "title": "Senderismo al mirador",
+    "duration": 60,
+    "time_start": "06:00",
+    "time_end": "17:00",
+    "capacity": 15,
+    "active": 1,
+    "benefit_text": "Ejercítate mientras disfrutas de vistas panorámicas de Ibagué"
+  },
+  {
+    "place_name": "Mirador Cerro de San Javier",
+    "title": "Observación del atardecer",
+    "duration": 30,
+    "time_start": "17:00",
+    "time_end": "18:30",
+    "capacity": 20,
+    "active": 1,
+    "benefit_text": "Disfruta de uno de los mejores atardeceres de la ciudad"
+  },
+  {
+    "place_name": "Café San Jorge",
+    "title": "Cata de café tolimense",
+    "duration": 25,
+    "time_start": "08:00",
+    "time_end": "18:00",
+    "capacity": 12,
+    "active": 1,
+    "benefit_text": "Degusta café premium cultivado en las montañas del Tolima"
+  },
+  {
+    "place_name": "Café San Jorge",
+    "title": "Desayuno tradicional ibaguereño",
+    "duration": 30,
+    "time_start": "07:00",
+    "time_end": "10:00",
+    "capacity": 20,
+    "active": 1,
+    "benefit_text": "Prueba un auténtico desayuno con productos locales"
+  },
+  {
+    "place_name": "Restaurante El Tolimense",
+    "title": "Clase de preparación de tamales",
+    "duration": 45,
+    "time_start": "15:00",
+    "time_end": "17:00",
+    "capacity": 10,
+    "active": 1,
+    "benefit_text": "Aprende a preparar el tamal tolimense tradicional"
+  },
+  {
+    "place_name": "Restaurante El Tolimense",
+    "title": "Almuerzo de comida regional",
+    "duration": 40,
+    "time_start": "12:00",
+    "time_end": "15:00",
+    "capacity": 30,
+    "active": 1,
+    "benefit_text": "Disfruta platos típicos como sancocho de gallina y lechona"
+  },
+  {
+    "place_name": "Biblioteca Darío Echandía",
+    "title": "Lectura de autores tolimenses",
+    "duration": 30,
+    "time_start": "09:00",
+    "time_end": "17:00",
+    "capacity": 25,
+    "active": 1,
+    "benefit_text": "Descubre obras de escritores de la región"
+  },
+  {
+    "place_name": "Biblioteca Darío Echandía",
+    "title": "Consulta de archivo histórico",
+    "duration": 45,
+    "time_start": "10:00",
+    "time_end": "16:00",
+    "capacity": 15,
+    "active": 1,
+    "benefit_text": "Accede a documentos históricos sobre Ibagué y el Tolima"
+  },
+  {
+    "place_name": "Casa de la Cultura",
+    "title": "Taller de música andina",
+    "duration": 30,
+    "time_start": "16:00",
+    "time_end": "18:00",
+    "capacity": 12,
+    "active": 1,
+    "benefit_text": "Aprende sobre instrumentos y ritmos tradicionales"
+  },
+  {
+    "place_name": "Casa de la Cultura",
+    "title": "Exhibición de arte contemporáneo",
+    "duration": 20,
+    "time_start": "14:00",
+    "time_end": "19:00",
+    "capacity": 35,
+    "active": 1,
+    "benefit_text": "Observa obras de artistas locales contemporáneos"
+  },
+  {
+    "place_name": "Parque Deportivo",
+    "title": "Clase de yoga al aire libre",
+    "duration": 45,
+    "time_start": "06:00",
+    "time_end": "08:00",
+    "capacity": 20,
+    "active": 1,
+    "benefit_text": "Practica yoga en un ambiente natural y tranquilo"
+  },
+  {
+    "place_name": "Parque Deportivo",
+    "title": "Entrenamiento funcional",
+    "duration": 30,
+    "time_start": "17:00",
+    "time_end": "19:00",
+    "capacity": 15,
+    "active": 1,
+    "benefit_text": "Participa en una rutina de ejercicio funcional al aire libre"
+  }
+]

@@ -130,4 +130,47 @@ export async function getChatStats() {
   return r.json();
 }
 
+// === MISSIONS API ===
+
+export async function initUserMissions(userId) {
+  const r = await fetch(`${API}/api/user/${userId}/missions/init`, {
+    method: 'POST'
+  });
+  return r.json();
+}
+
+export async function getUserMissions(userId) {
+  const r = await fetch(`${API}/api/user/${userId}/missions`);
+  return r.json();
+}
+
+export async function getUserBadges(userId) {
+  const r = await fetch(`${API}/api/user/${userId}/badges`);
+  return r.json();
+}
+
+export async function getUserStats(userId) {
+  const r = await fetch(`${API}/api/user/${userId}/stats`);
+  return r.json();
+}
+
+export async function getMissionsSummary(userId) {
+  const r = await fetch(`${API}/api/user/${userId}/missions/summary`);
+  return r.json();
+}
+
+export async function getAllMissions() {
+  const r = await fetch(`${API}/api/admin/missions`);
+  return r.json();
+}
+
+export async function triggerMissionProgress(userId, placeId, activityId = null) {
+  const r = await fetch(`${API}/api/user/${userId}/missions/trigger`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ placeId, activityId })
+  });
+  return r.json();
+}
+
 export { API };

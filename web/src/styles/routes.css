@@ -1,0 +1,157 @@
+/* Estilos para el sistema de rutas visuales */
+
+.route-line {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: all 0.2s ease;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.route-line:hover {
+  cursor: pointer;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+
+/* Marcadores numerados personalizados */
+.numbered-marker {
+  background: transparent;
+  border: none;
+}
+
+.numbered-marker-inner {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.numbered-marker-inner:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.marker-number {
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Animaciones para líneas de ruta */
+@keyframes routeAppear {
+  from {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 0;
+  }
+}
+
+.route-line-animated {
+  animation: routeAppear 1s ease-out forwards;
+}
+
+/* Estilos para popups de ruta mejorados */
+.leaflet-popup-content {
+  margin: 8px 12px !important;
+  line-height: 1.4 !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+/* Indicador de ruta activa */
+.route-timeline-item {
+  position: relative;
+  padding-left: 40px;
+}
+
+.route-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 12px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.route-timeline-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 19px;
+  top: 25px;
+  bottom: -8px;
+  width: 2px;
+  background: linear-gradient(to bottom, #3B82F6, #E5E7EB);
+}
+
+/* Efectos de drag and drop para reordenar */
+.route-item-dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+  transition: all 0.2s ease;
+}
+
+.route-drop-zone {
+  border: 2px dashed #3B82F6;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 8px;
+  margin: 4px 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3B82F6;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .numbered-marker-inner {
+    width: 25px;
+    height: 25px;
+    border-width: 2px;
+  }
+  
+  .marker-number {
+    font-size: 12px;
+  }
+  
+  .route-timeline-item {
+    padding-left: 30px;
+  }
+  
+  .route-timeline-item::before {
+    width: 8px;
+    height: 8px;
+    left: 12px;
+  }
+  
+  .route-timeline-item::after {
+    left: 15px;
+  }
+}
+
+/* Colores temáticos para diferentes tipos de lugares */
+.route-color-cultura { color: #8B5CF6; }
+.route-color-gastro { color: #EF4444; }
+.route-color-historia { color: #92400E; }
+.route-color-recreacion { color: #059669; }
+.route-color-shopping { color: #DC2626; }
+.route-color-religion { color: #7C2D12; }
+.route-color-naturaleza { color: #16A34A; }
+.route-color-educacion { color: #1D4ED8; }

@@ -15,6 +15,15 @@ import { geocodeAddress, reverseGeocode, validateLocation, searchPlacesByCategor
 import { getRouteData, calculateMultiPointRoute, optimizeRouteOrder, calculateWalkingTime } from './services/routing.js';
 import { validateLocationMiddleware, enrichLocationMiddleware, checkVerificationStatusMiddleware, validateActivityLocationMiddleware } from './middleware/locationValidation.js';
 import { processChatMessage, getChatStats, cleanChatCache } from './services/simpleChatService.js';
+import { 
+  initializeUserMissions, 
+  getUserActiveMissions, 
+  getUserBadges, 
+  getUserStats,
+  processCheckInForMissions,
+  getMissionsSummary,
+  getAllMissions
+} from './services/missionsService.js';
 
 // Load environment variables
 dotenv.config();
@@ -95,10 +104,37 @@ app.get('/api/activities', (req, res) => {
 app.post('/api/checkins', (req, res) => {
   const { user_id, place_id, activity_id } = req.body || {};
   if (!user_id || !place_id) return res.status(400).json({error:'missing fields'});
-  const ts = new Date().toISOString();
-  db.prepare('INSERT INTO checkin (user_id, place_id, activity_id, ts) VALUES (?,?,?,?)')
-    .run(user_id, place_id, activity_id||null, ts);
-  res.json({ ok: true, ts });
+  
+  try {
+    const ts = new Date().toISOString();
+    
+    // Insertar check-in
+    db.prepare('INSERT INTO checkin (user_id, place_id, activity_id, ts) VALUES (?,?,?,?)')
+      .run(user_id, place_id, activity_id||null, ts);
+    
+    // Procesar misiones
+    const missionResult = processCheckInForMissions(user_id, place_id, activity_id);
+    
+    // Asegurar que el usuario tenga misiones inicializadas
+    if (missionResult.success === false && missionResult.error === 'Place not found') {
+      // Si falla por lugar no encontrado, solo enviar el check-in básico
+      return res.json({ ok: true, ts });
+    }
+    
+    res.json({ 
+      ok: true, 
+      ts,
+      missions: missionResult.success ? {
+        completed: missionResult.completedMissions || [],
+        updated: missionResult.updatedMissions || [],
+        unlocked: missionResult.unlockedMissions || []
+      } : null
+    });
+    
+  } catch (error) {
+    console.error('Check-in error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.post('/api/auth/login', (req, res) => {
@@ -538,6 +574,117 @@ app.get('/api/admin/verification-stats', (req, res) => {
     res.json({ stats, verification_sources });
   } catch (error) {
     res.status(500).json({ error: 'Failed to get stats', details: error.message });
+  }
+});
+
+// === MISSIONS SYSTEM ENDPOINTS ===
+
+// Initialize user missions (called on first app load)
+app.post('/api/user/:userId/missions/init', (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const result = initializeUserMissions(userId);
+    res.json(result);
+  } catch (error) {
+    console.error('Error initializing user missions:', error);
+    res.status(500).json({ error: 'Failed to initialize missions' });
+  }
+});
+
+// Get user active missions
+app.get('/api/user/:userId/missions', (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const result = getUserActiveMissions(userId);
+    res.json(result);
+  } catch (error) {
+    console.error('Error getting user missions:', error);
+    res.status(500).json({ error: 'Failed to get missions' });
+  }
+});
+
+// Get user badges/achievements
+app.get('/api/user/:userId/badges', (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const result = getUserBadges(userId);
+    res.json(result);
+  } catch (error) {
+    console.error('Error getting user badges:', error);
+    res.status(500).json({ error: 'Failed to get badges' });
+  }
+});
+
+// Get user stats
+app.get('/api/user/:userId/stats', (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const result = getUserStats(userId);
+    res.json(result);
+  } catch (error) {
+    console.error('Error getting user stats:', error);
+    res.status(500).json({ error: 'Failed to get stats' });
+  }
+});
+
+// Get missions summary for header
+app.get('/api/user/:userId/missions/summary', (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const result = getMissionsSummary(userId);
+    res.json(result);
+  } catch (error) {
+    console.error('Error getting missions summary:', error);
+    res.status(500).json({ error: 'Failed to get missions summary' });
+  }
+});
+
+// Get all available missions (admin/demo)
+app.get('/api/admin/missions', (req, res) => {
+  try {
+    const result = getAllMissions();
+    res.json(result);
+  } catch (error) {
+    console.error('Error getting all missions:', error);
+    res.status(500).json({ error: 'Failed to get all missions' });
+  }
+});
+
+// Manual mission progress trigger (for testing)
+app.post('/api/user/:userId/missions/trigger', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { placeId, activityId } = req.body;
+    
+    if (!userId || !placeId) {
+      return res.status(400).json({ error: 'User ID and Place ID are required' });
+    }
+
+    const result = processCheckInForMissions(userId, placeId, activityId);
+    res.json(result);
+  } catch (error) {
+    console.error('Error triggering mission progress:', error);
+    res.status(500).json({ error: 'Failed to trigger mission progress' });
   }
 });
 

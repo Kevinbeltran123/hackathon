@@ -2,7 +2,7 @@
 import { create } from 'zustand'
 
 export const usePrefs = create(set => ({
-  prefs: { time: 180, pace: 'normal', budget: 2, tags: ['cultura','gastro'], mode:'walk', radius: 1200 },
+  prefs: { time: 180, pace: 'normal', budget: 2, tags: ['cultura','gastro','historia','recreacion','shopping','religion','naturaleza','educacion'], mode:'walk', radius: 3000 },
   setPrefs: (p) => set({ prefs: { ...p }}),
 }))
 

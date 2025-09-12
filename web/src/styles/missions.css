@@ -1,0 +1,86 @@
+/* Estilos específicos para el sistema de misiones */
+
+/* Asegurar que el panel de misiones esté por encima del mapa de Leaflet */
+.missions-modal {
+  z-index: 10001 !important;
+  position: fixed !important;
+}
+
+.missions-modal-backdrop {
+  z-index: 10000 !important;
+  position: fixed !important;
+}
+
+/* Notificaciones por encima del mapa pero debajo del modal */
+.missions-notifications {
+  z-index: 9999 !important;
+  position: fixed !important;
+}
+
+/* Badge de misiones con z-index alto */
+.missions-badge {
+  z-index: 1000 !important;
+  position: relative !important;
+}
+
+/* Asegurar que Leaflet no interfiera */
+.leaflet-container {
+  z-index: 1 !important;
+}
+
+.leaflet-control-container {
+  z-index: 100 !important;
+}
+
+.leaflet-popup {
+  z-index: 1010 !important;
+}
+
+.leaflet-tooltip {
+  z-index: 1020 !important;
+}
+
+/* Animaciones suaves para notificaciones */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.notification-enter {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.notification-exit {
+  animation: slideOutRight 0.3s ease-out;
+}
+
+/* Progress bar animation */
+@keyframes shrinkWidth {
+  from { 
+    width: 100%; 
+  }
+  to { 
+    width: 0%; 
+  }
+}
+
+.progress-shrink {
+  animation: shrinkWidth 5s linear;
+}

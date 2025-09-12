@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { getPlaces, getActivities } from '../lib/api.js'
 import { usePrefs, useRoute } from '../store/store.js'
+import TourGuideChat from '../components/TourGuideChat.jsx'
 
 export default function Explore(){
   const { prefs } = usePrefs()
@@ -33,7 +34,7 @@ export default function Explore(){
   }
 
   return (
-    <div className="grid lg:grid-cols-3 h-[calc(100vh-120px)]">
+    <div className="grid lg:grid-cols-3 h-[calc(100vh-120px)] relative">
       <div className="lg:col-span-2">
         <MapContainer center={[center.lat, center.lng]} zoom={15} style={{height:'100%'}}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -44,6 +45,9 @@ export default function Explore(){
                   <div className="font-semibold">{p.name}</div>
                   <div className="text-xs text-gray-600">{p.barrio} • {p.tags.join(', ')}</div>
                   <div>Duración: {p.base_duration} min</div>
+                  {p.verified && (
+                    <div className="text-xs text-green-600 font-medium">✓ Verificado</div>
+                  )}
                 </div>
               </Popup>
             </Marker>
@@ -88,6 +92,9 @@ export default function Explore(){
           </div>
         )}
       </div>
+      
+      {/* Tour Guide Chat */}
+      <TourGuideChat userLocation={center} />
     </div>
   )
 }

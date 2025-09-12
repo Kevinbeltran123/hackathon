@@ -14,6 +14,7 @@ import path from 'path';
 import { geocodeAddress, reverseGeocode, validateLocation, searchPlacesByCategory, cleanExpiredCache } from './services/geocoding.js';
 import { getRouteData, calculateMultiPointRoute, optimizeRouteOrder, calculateWalkingTime } from './services/routing.js';
 import { validateLocationMiddleware, enrichLocationMiddleware, checkVerificationStatusMiddleware, validateActivityLocationMiddleware } from './middleware/locationValidation.js';
+import { processChatMessage, getChatStats, cleanChatCache } from './services/simpleChatService.js';
 
 // Load environment variables
 dotenv.config();
@@ -465,11 +466,54 @@ app.get('/api/nearby-verified', checkVerificationStatusMiddleware, (req, res) =>
   }
 });
 
+// === CHAT ENDPOINTS ===
+
+// Main chat endpoint
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { message, userId, lat, lng, activeRoute } = req.body;
+    
+    if (!message?.trim()) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    // Build context
+    const context = {
+      userId: userId || `user_${Date.now()}`,
+      lat: lat ? parseFloat(lat) : null,
+      lng: lng ? parseFloat(lng) : null,
+      activeRoute: activeRoute || []
+    };
+
+    const result = await processChatMessage(message, context);
+    res.json(result);
+
+  } catch (error) {
+    console.error('Chat endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lo siento, tengo problemas técnicos. ¿Te gustaría que te recomiende algunos lugares emblemáticos de Ibagué mientras se soluciona? 😊',
+      error: error.message
+    });
+  }
+});
+
+// Chat statistics endpoint
+app.get('/api/admin/chat-stats', (req, res) => {
+  try {
+    const stats = getChatStats();
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get chat stats', details: error.message });
+  }
+});
+
 // System maintenance endpoints
 app.post('/api/admin/clean-cache', (req, res) => {
   try {
     cleanExpiredCache();
-    res.json({ message: 'Cache cleaned successfully' });
+    cleanChatCache();
+    res.json({ message: 'All caches cleaned successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to clean cache', details: error.message });
   }

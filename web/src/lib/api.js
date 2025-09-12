@@ -108,4 +108,26 @@ export async function getVerificationStats() {
   return r.json();
 }
 
+// === CHAT API ===
+
+export async function sendChatMessage(message, context = {}) {
+  const r = await fetch(`${API}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message,
+      userId: context.userId,
+      lat: context.lat,
+      lng: context.lng,
+      activeRoute: context.activeRoute
+    })
+  });
+  return r.json();
+}
+
+export async function getChatStats() {
+  const r = await fetch(`${API}/api/admin/chat-stats`);
+  return r.json();
+}
+
 export { API };

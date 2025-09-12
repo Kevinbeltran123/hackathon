@@ -5,6 +5,14 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Profile Panel Colors
+        forest: '#0E3D2E',
+        forest2: '#1F4D3B',
+        gold: '#F9A825',
+        ocobo: '#E91E63',
+        red: '#C62828',
+        neutral: '#1F2937',
+        
         brand: {
           // Colores del logo y ocobos
           'ocobo-pink': "#E74C7C",     // Rosa vibrante de los ocobos (del logo)
@@ -81,6 +89,28 @@ export default {
         'glow-gold': '0 0 20px rgba(255, 176, 32, 0.3)',       // Dorado
         'glow-nature': '0 0 20px rgba(76, 175, 80, 0.3)',      // Verde naturaleza
         'glow-blossom': '0 0 20px rgba(248, 187, 217, 0.4)'    // Rosa pétalo
+      },
+      
+      // Custom animations for Profile components
+      animation: {
+        'slide-in': 'slideIn 0.3s ease-out',
+        'fade-in': 'fadeIn 0.2s ease-out',
+        'float': 'float 3s ease-in-out infinite',
+      },
+      
+      keyframes: {
+        slideIn: {
+          '0%': { transform: 'translateX(100%)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
       }
     },
   },

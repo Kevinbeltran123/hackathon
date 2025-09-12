@@ -6,6 +6,17 @@
 
 html,body,#root{height:100%}
 
+/* FIX: Eliminar estilos que ocultan contenido */
+/* ELIMINAR si existen: */
+.auth-loading main{ opacity:0; visibility:hidden; }
+main[aria-busy="true"]{ opacity:0; }
+#app main.invisible{ display:none; }
+
+/* FIX z-index de overlays huérfanos: */
+#modal-root[aria-hidden="true"], #drawer-root[aria-hidden="true"]{ display:none; }
+header{ z-index:50; }
+main{ z-index:0; }
+
 /* Custom styles for Rutas VIVAS */
 
 * {
@@ -252,4 +263,96 @@ html,body,#root{height:100%}
 
 ::-webkit-scrollbar-thumb:hover {
   background: #2D6C4F;
+}
+
+/* Custom animations for Profile components */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Profile specific styles */
+.profile-gradient {
+  background: linear-gradient(135deg, #0E3D2E 0%, #1F4D3B 100%);
+}
+
+.ocobo-gradient {
+  background: linear-gradient(135deg, #E91E63 0%, #F9A825 100%);
+}
+
+.forest-gradient {
+  background: linear-gradient(135deg, #0E3D2E 0%, #1F4D3B 100%);
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #F9A825 0%, #FF9800 100%);
+}
+
+/* Glow effects */
+.shadow-glow-ocobo {
+  box-shadow: 0 0 20px rgba(233, 30, 99, 0.3);
+}
+
+.shadow-glow-forest {
+  box-shadow: 0 0 20px rgba(14, 61, 46, 0.3);
+}
+
+.shadow-glow-gold {
+  box-shadow: 0 0 20px rgba(249, 168, 37, 0.3);
+}
+
+/* Focus states for accessibility */
+.focus-ring:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: rgba(233, 30, 99, 0.5);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .profile-gradient {
+    background: #000000;
+    color: #ffffff;
+  }
+  
+  .ocobo-gradient {
+    background: #ff0000;
+    color: #ffffff;
+  }
 }

@@ -59,8 +59,21 @@ CREATE TABLE IF NOT EXISTS location_cache (
   expires_at TEXT
 );
 
+-- User preferences table for personalized filtering
+CREATE TABLE IF NOT EXISTS user_preferences (
+  id TEXT PRIMARY KEY,
+  interests TEXT, -- JSON array of selected interests
+  budget_min REAL,
+  budget_max REAL,
+  time_start TEXT, -- HH:MM format
+  time_end TEXT,   -- HH:MM format
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Index for better performance
 CREATE INDEX IF NOT EXISTS idx_place_location ON place(lat, lng);
 CREATE INDEX IF NOT EXISTS idx_place_verification ON place(verified, verification_source);
 CREATE INDEX IF NOT EXISTS idx_cache_query ON location_cache(query_hash);
 CREATE INDEX IF NOT EXISTS idx_cache_expires ON location_cache(expires_at);
+CREATE INDEX IF NOT EXISTS idx_user_preferences_id ON user_preferences(id);

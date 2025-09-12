@@ -69,7 +69,8 @@ export default function AdvancedFilterPanel({
   isOpen, 
   onClose, 
   onFiltersApply,
-  initialFilters = {}
+  initialFilters = {},
+  userId = null
 }) {
   const [selectedInterests, setSelectedInterests] = useState(
     initialFilters.interests || ['gastro', 'cultura']
@@ -78,6 +79,14 @@ export default function AdvancedFilterPanel({
   const [selectedRadius, setSelectedRadius] = useState(initialFilters.radius || 2000);
   const [isApplying, setIsApplying] = useState(false);
   const [previewResults, setPreviewResults] = useState(null);
+  const [showFallbackMessage, setShowFallbackMessage] = useState(false);
+
+  // Ensure at least one interest is always selected
+  useEffect(() => {
+    if (selectedInterests.length === 0) {
+      setSelectedInterests(['gastro']); // Auto-select first interest if none selected
+    }
+  }, [selectedInterests.length]);
 
   // Generar preview de resultados en tiempo real
   useEffect(() => {
@@ -96,7 +105,8 @@ export default function AdvancedFilterPanel({
         time: selectedTime,
         radius: selectedRadius,
         lat: IBAGUE_CENTER.lat,
-        lng: IBAGUE_CENTER.lng
+        lng: IBAGUE_CENTER.lng,
+        user_id: userId // Include user_id for preferences
       };
       
       const response = await fetch('/api/places/filtered', {
@@ -108,6 +118,7 @@ export default function AdvancedFilterPanel({
       if (response.ok) {
         const data = await response.json();
         setPreviewResults(data);
+        setShowFallbackMessage(data.fallback || false);
       }
     } catch (error) {
       console.error('Error generating preview:', error);
@@ -117,6 +128,10 @@ export default function AdvancedFilterPanel({
   const handleInterestToggle = (interestId) => {
     setSelectedInterests(prev => {
       if (prev.includes(interestId)) {
+        // Don't allow removing the last interest
+        if (prev.length <= 1) {
+          return prev; // Keep at least one interest selected
+        }
         return prev.filter(id => id !== interestId);
       } else {
         return [...prev, interestId];
@@ -134,7 +149,30 @@ export default function AdvancedFilterPanel({
       center: IBAGUE_CENTER
     };
 
-    // Guardar preferencias para futuras sesiones
+    // Save preferences to SQLite via API if userId provided
+    if (userId) {
+      try {
+        const response = await fetch(`/api/preferences/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            interests: selectedInterests,
+            budget_min: null, // Not implemented in UI yet
+            budget_max: null, // Not implemented in UI yet
+            time_start: null, // Not implemented in UI yet
+            time_end: null    // Not implemented in UI yet
+          })
+        });
+        
+        if (!response.ok) {
+          console.error('Failed to save preferences to database');
+        }
+      } catch (error) {
+        console.error('Error saving preferences:', error);
+      }
+    }
+
+    // Guardar preferencias para futuras sesiones (localStorage fallback)
     localStorage.setItem('rutasVivas_filters', JSON.stringify(filters));
     
     await onFiltersApply(filters);
@@ -177,16 +215,21 @@ export default function AdvancedFilterPanel({
             className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 overflow-hidden flex flex-col"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold">🎯 Personalizar Experiencia</h2>
-                <p className="text-blue-100 text-sm">Descubre Ibagué a tu medida</p>
+            <div className="gradient-primary text-white p-6 flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                  <span className="text-2xl">🎯</span>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">Personalizar Experiencia</h2>
+                  <p className="text-blue-100 text-sm">Descubre Ibagué a tu medida</p>
+                </div>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
+                className="w-10 h-10 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full flex items-center justify-center text-white text-xl transition-all duration-200 hover:scale-110"
               >
-                <span className="text-2xl">×</span>
+                ×
               </button>
             </div>
 
@@ -205,15 +248,15 @@ export default function AdvancedFilterPanel({
                       key={category.id}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleInterestToggle(category.id)}
-                      className={`p-3 rounded-xl border-2 transition-all duration-200 text-left ${
+                      className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                         selectedInterests.includes(category.id)
-                          ? 'border-blue-500 bg-blue-50 shadow-md'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          ? 'border-brand-green bg-gradient-to-r from-brand-green/10 to-brand-blue/10 shadow-lg scale-105'
+                          : 'border-gray-200 hover:border-brand-green hover:bg-gray-50'
                       }`}
                     >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-lg">{category.icon}</span>
-                        <span className="font-medium text-sm">{category.name}</span>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl">{category.icon}</span>
+                        <span className="font-semibold text-sm">{category.name}</span>
                       </div>
                       <div className="text-xs text-gray-600">
                         {category.subcategories.join(', ')}
@@ -226,6 +269,11 @@ export default function AdvancedFilterPanel({
                     ⚠️ Selecciona al menos un interés
                   </p>
                 )}
+                {showFallbackMessage && (
+                  <p className="text-sm text-orange-600 mt-2 bg-orange-50 p-2 rounded">
+                    ℹ️ Mostrando opciones cercanas por tus intereses
+                  </p>
+                )}
               </div>
 
               {/* Tiempo Disponible */}
@@ -234,30 +282,30 @@ export default function AdvancedFilterPanel({
                   <span className="text-xl">⏰</span>
                   Tiempo Disponible
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {TIME_OPTIONS.map(option => (
                     <motion.button
                       key={option.value}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setSelectedTime(option.value)}
-                      className={`w-full p-3 rounded-lg border-2 transition-all duration-200 text-left ${
+                      className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                         selectedTime === option.value
-                          ? 'border-green-500 bg-green-50 shadow-md'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          ? 'border-brand-green bg-gradient-to-r from-brand-green/10 to-brand-blue/10 shadow-lg scale-105'
+                          : 'border-gray-200 hover:border-brand-green hover:bg-gray-50'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-medium">{option.label}</div>
+                          <div className="font-semibold text-gray-900">{option.label}</div>
                           <div className="text-sm text-gray-600">{option.places}</div>
                         </div>
-                        <div className={`w-4 h-4 rounded-full border-2 ${
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                           selectedTime === option.value 
-                            ? 'bg-green-500 border-green-500' 
+                            ? 'bg-brand-green border-brand-green' 
                             : 'border-gray-300'
                         }`}>
                           {selectedTime === option.value && (
-                            <div className="w-full h-full rounded-full bg-white scale-50"></div>
+                            <div className="w-2 h-2 rounded-full bg-white"></div>
                           )}
                         </div>
                       </div>
@@ -272,26 +320,26 @@ export default function AdvancedFilterPanel({
                   <span className="text-xl">🚶</span>
                   Radio de Caminata
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {RADIUS_OPTIONS.map(option => (
                     <motion.button
                       key={option.value}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setSelectedRadius(option.value)}
-                      className={`w-full p-3 rounded-lg border-2 transition-all duration-200 text-left ${
+                      className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                         selectedRadius === option.value
-                          ? 'border-orange-500 bg-orange-50 shadow-md'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          ? 'border-brand-amber bg-gradient-to-r from-brand-amber/10 to-orange-500/10 shadow-lg scale-105'
+                          : 'border-gray-200 hover:border-brand-amber hover:bg-gray-50'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-medium">{option.label}</div>
+                          <div className="font-semibold text-gray-900">{option.label}</div>
                           <div className="text-sm text-gray-600">{option.walkTime}</div>
                         </div>
                         <div 
-                          className={`w-6 h-6 rounded-full border-3 relative ${
-                            selectedRadius === option.value ? 'border-orange-500' : 'border-gray-300'
+                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                            selectedRadius === option.value ? 'border-brand-amber' : 'border-gray-300'
                           }`}
                           style={{ 
                             backgroundColor: selectedRadius === option.value ? option.color + '20' : 'transparent' 
@@ -299,7 +347,7 @@ export default function AdvancedFilterPanel({
                         >
                           {selectedRadius === option.value && (
                             <div 
-                              className="absolute inset-1 rounded-full"
+                              className="w-3 h-3 rounded-full"
                               style={{ backgroundColor: option.color }}
                             ></div>
                           )}
@@ -336,24 +384,24 @@ export default function AdvancedFilterPanel({
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-gray-200 space-y-3">
+            <div className="p-6 border-t border-gray-200 space-y-4">
               <div className="flex gap-3">
                 <button
                   onClick={resetFilters}
-                  className="flex-1 py-2 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 py-3 px-4 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium"
                 >
-                  Resetear
+                  🔄 Resetear
                 </button>
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={handleApplyFilters}
                   disabled={selectedInterests.length === 0 || isApplying}
-                  className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all duration-200 ${
+                  className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all duration-200 ${
                     selectedInterests.length === 0 
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : isApplying
-                      ? 'bg-blue-400 text-white'
-                      : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-lg'
+                      ? 'bg-brand-blue text-white'
+                      : 'btn-primary'
                   }`}
                 >
                   {isApplying ? (
@@ -367,7 +415,7 @@ export default function AdvancedFilterPanel({
                 </motion.button>
               </div>
               
-              <div className="text-center text-xs text-gray-500">
+              <div className="text-center text-sm text-gray-600 bg-gray-50 p-3 rounded-xl">
                 📍 Desde el centro de Ibagué • {selectedRadiusOption?.label} radio
               </div>
             </div>

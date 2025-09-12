@@ -2,21 +2,37 @@ import { useEffect, useRef } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 
-const ROUTE_COLORS = [
-  '#FF6B6B', // Rojo coral
-  '#4ECDC4', // Turquesa
-  '#45B7D1', // Azul cielo
-  '#96CEB4', // Verde menta
-  '#FFEAA7', // Amarillo suave
-  '#DDA0DD', // Lila
-  '#98D8C8', // Verde agua
-  '#F7DC6F'  // Amarillo dorado
+// Category-based colors for route segments - Temática de ocobos
+const CATEGORY_COLORS = {
+  'gastro': '#FFB020',      // Dorado del logo para gastronomía
+  'cultura': '#E74C7C',     // Rosa ocobo para cultura
+  'naturaleza': '#2D6C4F',  // Verde bosque para naturaleza
+  'shopping': '#FFB020',    // Dorado del logo para compras
+  'recreacion': '#2196F3',  // Azul cielo para entretenimiento
+  'servicios': '#8D6E63',   // Marrón tronco para servicios
+  'historia': '#8D6E63',    // Marrón tronco para historia
+  'religion': '#E74C7C',    // Rosa ocobo para religión
+  'educacion': '#2196F3',   // Azul cielo para educación
+  'default': '#757575'      // Gris para categorías desconocidas
+};
+
+// Fallback colors for when we have more segments than categories - Temática de ocobos
+const FALLBACK_COLORS = [
+  '#E74C7C', // Rosa ocobo
+  '#2D6C4F', // Verde bosque
+  '#FFB020', // Dorado del logo
+  '#5C9C6F', // Verde colinas
+  '#F8BBD9', // Rosa claro de ocobos
+  '#2196F3', // Azul cielo
+  '#8D6E63', // Marrón tronco
+  '#FF9800'  // Naranja atardecer
 ];
 
 export default function RouteManager({ items, onItemReorder }) {
   const map = useMap();
   const routeLayersRef = useRef([]);
   const markersRef = useRef([]);
+  const routeLayerGroupRef = useRef(null); // Layer group for route management
 
   useEffect(() => {
     if (!map || !items || items.length === 0) {
@@ -26,6 +42,11 @@ export default function RouteManager({ items, onItemReorder }) {
 
     // Limpiar rutas anteriores
     clearRoutes();
+
+    // Create or get route layer group
+    if (!routeLayerGroupRef.current) {
+      routeLayerGroupRef.current = L.layerGroup().addTo(map);
+    }
 
     // Filtrar elementos con coordenadas válidas
     const validItems = items.filter(item => 
@@ -46,9 +67,13 @@ export default function RouteManager({ items, onItemReorder }) {
         [endPoint.lat, endPoint.lng]
       ];
 
-      // Crear polyline con estilo dinámico
+      // Determine color based on destination category
+      const destinationCategory = getCategoryFromTags(endPoint.tags);
+      const routeColor = CATEGORY_COLORS[destinationCategory] || CATEGORY_COLORS.default;
+
+      // Crear polyline con color basado en categoría
       const polyline = L.polyline(routeCoords, {
-        color: ROUTE_COLORS[i % ROUTE_COLORS.length],
+        color: routeColor,
         weight: 4,
         opacity: 0.8,
         smoothFactor: 1,
@@ -81,24 +106,29 @@ export default function RouteManager({ items, onItemReorder }) {
                 ${startPoint.title || startPoint.name} → ${endPoint.title || endPoint.name}
               </div>
               <div class="text-xs text-gray-500 mt-1">
-                Distancia estimada: ${calculateDistance(startPoint, endPoint)} km
+                Categoría: ${destinationCategory} • Distancia: ${calculateDistance(startPoint, endPoint)} km
               </div>
             </div>
           `)
           .openOn(map);
       });
 
-      polyline.addTo(map);
+      // Add to layer group instead of directly to map
+      polyline.addTo(routeLayerGroupRef.current);
       routeLayersRef.current.push(polyline);
     }
 
     // Crear marcadores numerados para cada punto
     validItems.forEach((item, index) => {
+      // Determine color based on item category
+      const itemCategory = getCategoryFromTags(item.tags);
+      const markerColor = CATEGORY_COLORS[itemCategory] || CATEGORY_COLORS.default;
+      
       // Crear icono numerado personalizado
       const numberedIcon = L.divIcon({
         className: 'numbered-marker',
         html: `
-          <div class="numbered-marker-inner" style="background-color: ${ROUTE_COLORS[index % ROUTE_COLORS.length]}">
+          <div class="numbered-marker-inner" style="background-color: ${markerColor}">
             <span class="marker-number">${index + 1}</span>
           </div>
         `,
@@ -154,16 +184,13 @@ export default function RouteManager({ items, onItemReorder }) {
   }, [map, items]);
 
   const clearRoutes = () => {
-    // Limpiar polylines
-    routeLayersRef.current.forEach(layer => {
-      map.removeLayer(layer);
-    });
+    // Clear layer group (this removes all polylines and markers)
+    if (routeLayerGroupRef.current) {
+      routeLayerGroupRef.current.clearLayers();
+    }
+    
+    // Reset arrays
     routeLayersRef.current = [];
-
-    // Limpiar marcadores numerados
-    markersRef.current.forEach(marker => {
-      map.removeLayer(marker);
-    });
     markersRef.current = [];
   };
 
@@ -175,6 +202,44 @@ export default function RouteManager({ items, onItemReorder }) {
   }, []);
 
   return null; // Este componente no renderiza JSX, solo maneja el mapa
+}
+
+// Helper function to determine category from tags
+function getCategoryFromTags(tags) {
+  if (!tags || !Array.isArray(tags)) return 'default';
+  
+  // Map tag values to category IDs
+  const tagToCategory = {
+    'restaurante': 'gastro',
+    'café': 'gastro',
+    'panadería': 'gastro',
+    'bar': 'gastro',
+    'museo': 'cultura',
+    'iglesia': 'cultura',
+    'teatro': 'cultura',
+    'monumento': 'cultura',
+    'parque': 'naturaleza',
+    'mirador': 'naturaleza',
+    'sendero': 'naturaleza',
+    'centro comercial': 'shopping',
+    'artesanías': 'shopping',
+    'mercado': 'shopping',
+    'cine': 'recreacion',
+    'karaoke': 'recreacion',
+    'juegos': 'recreacion',
+    'banco': 'servicios',
+    'farmacia': 'servicios',
+    'hospital': 'servicios'
+  };
+  
+  // Find first matching category
+  for (const tag of tags) {
+    if (tagToCategory[tag]) {
+      return tagToCategory[tag];
+    }
+  }
+  
+  return 'default';
 }
 
 // Función para calcular distancia aproximada entre dos puntos

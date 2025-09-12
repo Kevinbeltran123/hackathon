@@ -5,56 +5,56 @@ import L from 'leaflet';
 const CATEGORY_ICONS = {
   gastro: { 
     emoji: '🍽️', 
-    color: '#EF4444',
-    bgColor: '#FEF2F2',
+    color: '#FFB020',
+    bgColor: '#FFF8E1',
     name: 'Gastronomía'
   },
   cultura: { 
     emoji: '🏛️', 
-    color: '#8B5CF6',
-    bgColor: '#F5F3FF',
+    color: '#E74C7C',
+    bgColor: '#FCE4EC',
     name: 'Cultura'
   },
   shopping: { 
     emoji: '🛒', 
-    color: '#F59E0B',
-    bgColor: '#FFFBEB',
+    color: '#FFB020',
+    bgColor: '#FFF8E1',
     name: 'Compras'
   },
   naturaleza: { 
     emoji: '🌿', 
-    color: '#10B981',
-    bgColor: '#ECFDF5',
+    color: '#2D6C4F',
+    bgColor: '#E8F5E8',
     name: 'Naturaleza'
   },
   recreacion: { 
     emoji: '🎭', 
-    color: '#3B82F6',
-    bgColor: '#EFF6FF',
+    color: '#2196F3',
+    bgColor: '#E3F2FD',
     name: 'Entretenimiento'
   },
   servicios: { 
     emoji: '🏥', 
-    color: '#6B7280',
-    bgColor: '#F9FAFB',
+    color: '#8D6E63',
+    bgColor: '#F5F5F5',
     name: 'Servicios'
   },
   historia: { 
     emoji: '🏛️', 
-    color: '#92400E',
-    bgColor: '#FEF3C7',
+    color: '#8D6E63',
+    bgColor: '#F5F5F5',
     name: 'Historia'
   },
   religion: { 
     emoji: '⛪', 
-    color: '#7C2D12',
-    bgColor: '#FEF2F2',
+    color: '#E74C7C',
+    bgColor: '#FCE4EC',
     name: 'Religión'
   },
   educacion: { 
     emoji: '📚', 
-    color: '#1D4ED8',
-    bgColor: '#EFF6FF',
+    color: '#2196F3',
+    bgColor: '#E3F2FD',
     name: 'Educación'
   }
 };

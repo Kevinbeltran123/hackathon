@@ -24,6 +24,7 @@ import {
   getMissionsSummary,
   getAllMissions
 } from './services/missionsService.js';
+import { enhancedPlacesService } from './services/enhancedPlacesService.js';
 
 // Load environment variables
 dotenv.config();
@@ -57,13 +58,27 @@ app.get('/api/places', (req, res) => {
       .filter(x => x.distance <= Number(radius))
       .sort((a,b) => a.distance - b.distance);
   }
+  console.log(`API /places returning ${filtered.length} places`);
   res.json(filtered.slice(0, 50));
 });
 
 app.get('/api/activities', (req, res) => {
-  const { lat, lng, tags, time_left = 120 } = req.query;
+  const { lat, lng, tags, time_left = 120, user_id } = req.query;
   const now = new Date();
   const nowMin = now.getHours()*60 + now.getMinutes();
+  
+  // Get user preferences if user_id provided
+  let userPreferences = null;
+  if (user_id) {
+    const prefs = db.prepare('SELECT * FROM user_preferences WHERE id = ?').get(user_id);
+    if (prefs) {
+      userPreferences = {
+        ...prefs,
+        interests: prefs.interests ? JSON.parse(prefs.interests) : []
+      };
+    }
+  }
+  
   const acts = db.prepare(`
     SELECT a.*, p.name as place_name, p.lat, p.lng, p.tags, p.rating
     FROM micro_activity a
@@ -72,10 +87,15 @@ app.get('/api/activities', (req, res) => {
   `).all().map(r => ({...r, tags: parseTags(r.tags)}));
 
   let filtered = acts;
-  if (tags) {
-    const set = new Set(tags.split(','));
+  
+  // Use user preferences if available, otherwise use request parameters
+  const effectiveTags = userPreferences?.interests?.length > 0 ? userPreferences.interests : (tags ? tags.split(',') : []);
+  
+  if (effectiveTags.length > 0) {
+    const set = new Set(effectiveTags);
     filtered = filtered.filter(x => x.tags.some(t => set.has(t)));
   }
+  
   if (lat && lng) {
     const p = { lat: parseFloat(lat), lng: parseFloat(lng) };
     filtered = filtered.map(x => {
@@ -86,8 +106,8 @@ app.get('/api/activities', (req, res) => {
 
   filtered = filtered.filter(x => withinWindow(nowMin, x.time_start, x.time_end) && (x.duration <= Number(time_left)));
 
-  // Simple affinity (overlap tags)
-  const prefTags = new Set((req.query.pref_tags || '').split(',').filter(Boolean));
+  // Simple affinity (overlap tags) - FIX: Use && instead of and
+  const prefTags = new Set(effectiveTags.filter(Boolean));
   const benefitWeight = (txt) => txt ? 1.0 : 0.0;
 
   const scored = filtered.map(x => {
@@ -688,16 +708,254 @@ app.post('/api/user/:userId/missions/trigger', (req, res) => {
   }
 });
 
-// Advanced filtering endpoint
-app.post('/api/places/filtered', (req, res) => {
+// User preferences endpoint - PUT /preferences/:id
+app.put('/api/preferences/:id', (req, res) => {
   try {
-    const { interests = [], time = 3, radius = 2000, lat, lng } = req.body;
+    const { id } = req.params;
+    const { interests, budget_min, budget_max, time_start, time_end } = req.body;
+    
+    if (!id) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+    
+    // Validate interests array
+    if (interests && (!Array.isArray(interests) || interests.length === 0)) {
+      return res.status(400).json({ error: 'At least one interest must be selected' });
+    }
+    
+    // Validate budget range
+    if (budget_min !== undefined && budget_max !== undefined && budget_min > budget_max) {
+      return res.status(400).json({ error: 'Minimum budget cannot be greater than maximum budget' });
+    }
+    
+    // Validate time format (HH:MM)
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (time_start && !timeRegex.test(time_start)) {
+      return res.status(400).json({ error: 'time_start must be in HH:MM format' });
+    }
+    if (time_end && !timeRegex.test(time_end)) {
+      return res.status(400).json({ error: 'time_end must be in HH:MM format' });
+    }
+    
+    // Upsert user preferences
+    const stmt = db.prepare(`
+      INSERT OR REPLACE INTO user_preferences 
+      (id, interests, budget_min, budget_max, time_start, time_end, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    `);
+    
+    const result = stmt.run(
+      id,
+      interests ? JSON.stringify(interests) : null,
+      budget_min || null,
+      budget_max || null,
+      time_start || null,
+      time_end || null
+    );
+    
+    res.json({ 
+      success: true, 
+      id,
+      preferences: {
+        interests,
+        budget_min,
+        budget_max,
+        time_start,
+        time_end
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error saving user preferences:', error);
+    res.status(500).json({ error: 'Failed to save preferences', details: error.message });
+  }
+});
+
+// Get user preferences endpoint
+app.get('/api/preferences/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+    
+    const preferences = db.prepare('SELECT * FROM user_preferences WHERE id = ?').get(id);
+    
+    if (!preferences) {
+      return res.json({ 
+        success: true, 
+        preferences: null 
+      });
+    }
+    
+    // Parse interests JSON
+    const parsedPreferences = {
+      ...preferences,
+      interests: preferences.interests ? JSON.parse(preferences.interests) : []
+    };
+    
+    res.json({ 
+      success: true, 
+      preferences: parsedPreferences 
+    });
+    
+  } catch (error) {
+    console.error('Error getting user preferences:', error);
+    res.status(500).json({ error: 'Failed to get preferences', details: error.message });
+  }
+});
+
+// Enhanced places search using external APIs
+app.post('/api/places/enhanced', async (req, res) => {
+  try {
+    const { interests = [], time = 3, radius = 2000, lat, lng, user_id } = req.body;
     
     if (!lat || !lng) {
       return res.status(400).json({ error: 'Latitude and longitude are required' });
     }
 
     const center = { lat: parseFloat(lat), lng: parseFloat(lng) };
+    
+    // Get user preferences if user_id provided
+    let userPreferences = null;
+    if (user_id) {
+      const prefs = db.prepare('SELECT * FROM user_preferences WHERE id = ?').get(user_id);
+      if (prefs) {
+        userPreferences = {
+          ...prefs,
+          interests: prefs.interests ? JSON.parse(prefs.interests) : []
+        };
+      }
+    }
+    
+    // Use user preferences if available, otherwise use request parameters
+    const effectiveInterests = userPreferences?.interests?.length > 0 ? userPreferences.interests : interests;
+    const effectiveTime = time;
+    const effectiveRadius = radius;
+    
+    console.log('Enhanced search with interests:', effectiveInterests, 'radius:', effectiveRadius);
+    
+    // Use enhanced places service with external APIs
+    const enhancedPlaces = await enhancedPlacesService.searchPlaces(
+      center.lat, 
+      center.lng, 
+      effectiveRadius, 
+      effectiveInterests, 
+      effectiveTime
+    );
+    
+    // Also get places from local database
+    const localPlaces = db.prepare('SELECT * FROM place').all();
+    const localPlacesWithTags = localPlaces.map(place => ({
+      ...place,
+      tags: parseTags(place.tags),
+      distance: distanceMeters(center, { lat: place.lat, lng: place.lng })
+    }));
+
+    // Filter local places by interests and radius
+    let filteredLocalPlaces = localPlacesWithTags;
+    if (effectiveInterests.length > 0) {
+      const interestSet = new Set(effectiveInterests);
+      filteredLocalPlaces = localPlacesWithTags.filter(place => 
+        place.tags.some(tag => interestSet.has(tag)) && place.distance <= effectiveRadius
+      );
+    } else {
+      filteredLocalPlaces = localPlacesWithTags.filter(place => place.distance <= effectiveRadius);
+    }
+
+    // Combine enhanced and local places, removing duplicates
+    const allPlaces = [...enhancedPlaces, ...filteredLocalPlaces];
+    const uniquePlaces = allPlaces.filter((place, index, self) => 
+      index === self.findIndex(p => 
+        Math.abs(p.lat - place.lat) < 0.0001 && 
+        Math.abs(p.lng - place.lng) < 0.0001 &&
+        p.name === place.name
+      )
+    );
+
+    // Sort by score and limit results
+    const timeMultiplier = {
+      1: 3,   // 1 hour -> max 3 places
+      2: 5,   // 2 hours -> max 5 places
+      3: 8,   // 3 hours -> max 8 places
+      4: 12,  // 4 hours -> max 12 places
+      8: 20   // Full day -> max 20 places
+    };
+
+    const maxPlaces = timeMultiplier[effectiveTime] || 8;
+    const optimizedPlaces = uniquePlaces.slice(0, maxPlaces);
+
+    // Calculate estimated total time
+    const estimatedTime = optimizedPlaces.reduce((total, place) => {
+      return total + (place.base_duration || 30); // Default 30 min if not specified
+    }, 0);
+
+    // Add walking time between places
+    const walkingTime = optimizedPlaces.reduce((total, place, index) => {
+      if (index === 0) return total;
+      const prevPlace = optimizedPlaces[index - 1];
+      const walkDistance = distanceMeters(
+        { lat: prevPlace.lat, lng: prevPlace.lng },
+        { lat: place.lat, lng: place.lng }
+      );
+      return total + Math.ceil(walkDistance / 100) * 2; // 2 min per 100m
+    }, 0);
+
+    const totalEstimatedTime = estimatedTime + walkingTime;
+    
+    // Calculate average distance from center
+    const avgDistance = optimizedPlaces.length > 0 
+      ? optimizedPlaces.reduce((sum, p) => sum + (p.distance || 0), 0) / optimizedPlaces.length / 1000
+      : 0;
+
+    res.json({
+      places: optimizedPlaces,
+      totalPlaces: optimizedPlaces.length,
+      estimatedTime: totalEstimatedTime,
+      avgDistance,
+      filters: { interests: effectiveInterests, time: effectiveTime, radius: effectiveRadius },
+      center,
+      sources: {
+        enhanced: enhancedPlaces.length,
+        local: filteredLocalPlaces.length,
+        total: uniquePlaces.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Enhanced places search error:', error);
+    res.status(500).json({ error: 'Enhanced search failed', details: error.message });
+  }
+});
+
+// Advanced filtering endpoint with user preferences and fallback
+app.post('/api/places/filtered', (req, res) => {
+  try {
+    const { interests = [], time = 3, radius = 2000, lat, lng, user_id } = req.body;
+    
+    if (!lat || !lng) {
+      return res.status(400).json({ error: 'Latitude and longitude are required' });
+    }
+
+    const center = { lat: parseFloat(lat), lng: parseFloat(lng) };
+    
+    // Get user preferences if user_id provided
+    let userPreferences = null;
+    if (user_id) {
+      const prefs = db.prepare('SELECT * FROM user_preferences WHERE id = ?').get(user_id);
+      if (prefs) {
+        userPreferences = {
+          ...prefs,
+          interests: prefs.interests ? JSON.parse(prefs.interests) : []
+        };
+      }
+    }
+    
+    // Use user preferences if available, otherwise use request parameters
+    const effectiveInterests = userPreferences?.interests?.length > 0 ? userPreferences.interests : interests;
+    const effectiveTime = time;
+    const effectiveRadius = radius;
     
     // Get all places from database
     const allPlaces = db.prepare('SELECT * FROM place').all();
@@ -708,10 +966,10 @@ app.post('/api/places/filtered', (req, res) => {
       tags: parseTags(place.tags)
     }));
 
-    // Filter by interests (categories)
+    // Filter by interests (categories) - FIX: Use && instead of and
     let filteredPlaces = placesWithTags;
-    if (interests.length > 0) {
-      const interestSet = new Set(interests);
+    if (effectiveInterests.length > 0) {
+      const interestSet = new Set(effectiveInterests);
       filteredPlaces = placesWithTags.filter(place => 
         place.tags.some(tag => interestSet.has(tag))
       );
@@ -723,14 +981,14 @@ app.post('/api/places/filtered', (req, res) => {
         ...place,
         distance: distanceMeters(center, { lat: place.lat, lng: place.lng })
       }))
-      .filter(place => place.distance <= radius);
+      .filter(place => place.distance <= effectiveRadius);
 
     // Calculate scoring based on distance, rating, and relevance
     filteredPlaces = filteredPlaces.map(place => {
       let score = 0;
       
       // Distance score (closer is better, max 40 points)
-      const distanceScore = Math.max(0, 40 - (place.distance / radius) * 40);
+      const distanceScore = Math.max(0, 40 - (place.distance / effectiveRadius) * 40);
       score += distanceScore;
       
       // Rating score (max 30 points)
@@ -738,8 +996,8 @@ app.post('/api/places/filtered', (req, res) => {
       score += ratingScore;
       
       // Interest relevance score (max 30 points)
-      const matchingInterests = place.tags.filter(tag => interests.includes(tag)).length;
-      const relevanceScore = interests.length > 0 ? (matchingInterests / interests.length) * 30 : 15;
+      const matchingInterests = place.tags.filter(tag => effectiveInterests.includes(tag)).length;
+      const relevanceScore = effectiveInterests.length > 0 ? (matchingInterests / effectiveInterests.length) * 30 : 15;
       score += relevanceScore;
       
       // Bonus for verified places
@@ -762,10 +1020,44 @@ app.post('/api/places/filtered', (req, res) => {
       8: 20   // Full day -> max 20 places
     };
 
-    const maxPlaces = timeMultiplier[time] || 8;
+    const maxPlaces = timeMultiplier[effectiveTime] || 8;
     
     // Ensure diversity of categories if possible
-    const optimizedPlaces = diversifyPlaces(filteredPlaces.slice(0, maxPlaces * 2), interests, maxPlaces);
+    let optimizedPlaces = diversifyPlaces(filteredPlaces.slice(0, maxPlaces * 2), effectiveInterests, maxPlaces);
+    
+    // FALLBACK LOGIC: If no places found, show nearby places with interests
+    if (optimizedPlaces.length === 0) {
+      console.log('No places found with filters, applying fallback logic');
+      
+      // Get all places within radius, sorted by distance
+      const nearbyPlaces = allPlaces
+        .map(place => ({
+          ...place,
+          tags: parseTags(place.tags),
+          distance: distanceMeters(center, { lat: place.lat, lng: place.lng })
+        }))
+        .filter(place => place.distance <= effectiveRadius * 1.5) // Expand radius for fallback
+        .sort((a, b) => a.distance - b.distance);
+      
+      // Try to find places that match at least one interest
+      if (effectiveInterests.length > 0) {
+        const interestSet = new Set(effectiveInterests);
+        const matchingPlaces = nearbyPlaces.filter(place => 
+          place.tags.some(tag => interestSet.has(tag))
+        );
+        
+        if (matchingPlaces.length > 0) {
+          optimizedPlaces = matchingPlaces.slice(0, Math.min(3, maxPlaces));
+        }
+      }
+      
+      // If still no places, get the most popular nearby places
+      if (optimizedPlaces.length === 0) {
+        optimizedPlaces = nearbyPlaces
+          .sort((a, b) => (b.rating || 4.0) - (a.rating || 4.0)) // Sort by rating
+          .slice(0, Math.min(3, maxPlaces));
+      }
+    }
 
     // Calculate estimated total time
     const estimatedTime = optimizedPlaces.reduce((total, place) => {
@@ -795,8 +1087,9 @@ app.post('/api/places/filtered', (req, res) => {
       totalPlaces: optimizedPlaces.length,
       estimatedTime: totalEstimatedTime,
       avgDistance,
-      filters: { interests, time, radius },
-      center
+      filters: { interests: effectiveInterests, time: effectiveTime, radius: effectiveRadius },
+      center,
+      fallback: optimizedPlaces.length > 0 && filteredPlaces.length === 0 // Indicate if fallback was used
     });
 
   } catch (error) {

@@ -1,5 +1,255 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 html,body,#root{height:100%}
+
+/* Custom styles for Rutas VIVAS */
+
+* {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Gradient backgrounds - Temática de ocobos */
+.gradient-primary {
+  background: linear-gradient(135deg, #E74C7C 0%, #2D6C4F 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, #FFB020 0%, #FF9800 50%, #E74C7C 100%);
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, #E74C7C 0%, #F8BBD9 100%);
+}
+
+.gradient-nature {
+  background: linear-gradient(135deg, #2D6C4F 0%, #5C9C6F 50%, #4CAF50 100%);
+}
+
+.gradient-culture {
+  background: linear-gradient(135deg, #E74C7C 0%, #F8BBD9 100%);
+}
+
+.gradient-gastro {
+  background: linear-gradient(135deg, #FFB020 0%, #FF9800 100%);
+}
+
+.gradient-sky {
+  background: linear-gradient(135deg, #2196F3 0%, #F0F0F0 100%);
+}
+
+.gradient-earth {
+  background: linear-gradient(135deg, #8D6E63 0%, #6D4C41 100%);
+}
+
+.gradient-ocobo {
+  background: linear-gradient(135deg, #E74C7C 0%, #F8BBD9 100%);
+}
+
+.gradient-forest {
+  background: linear-gradient(135deg, #2D6C4F 0%, #5C9C6F 100%);
+}
+
+.gradient-blossom {
+  background: linear-gradient(135deg, #E74C7C 0%, #F8BBD9 50%, #FFB020 100%);
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Custom shadows - Temática de ocobos */
+.shadow-soft {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.shadow-medium {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.shadow-strong {
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.16);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 20px rgba(231, 76, 124, 0.3);
+}
+
+.shadow-glow-ocobo {
+  box-shadow: 0 0 20px rgba(231, 76, 124, 0.3);
+}
+
+.shadow-glow-forest {
+  box-shadow: 0 0 20px rgba(45, 108, 79, 0.3);
+}
+
+.shadow-glow-gold {
+  box-shadow: 0 0 20px rgba(255, 176, 32, 0.3);
+}
+
+.shadow-glow-nature {
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+}
+
+.shadow-glow-blossom {
+  box-shadow: 0 0 20px rgba(248, 187, 217, 0.4);
+}
+
+/* Animated elements */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(59, 178, 115, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(59, 178, 115, 0.6); }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Custom button styles - Temática de ocobos */
+.btn-primary {
+  @apply bg-gradient-primary text-white font-semibold py-3 px-6 rounded-xl shadow-soft hover:shadow-medium transform hover:scale-105 transition-all duration-200;
+}
+
+.btn-secondary {
+  @apply bg-white text-brand-ocobo-pink font-semibold py-3 px-6 rounded-xl shadow-soft hover:shadow-medium border-2 border-brand-ocobo-pink hover:bg-brand-ocobo-pink hover:text-white transform hover:scale-105 transition-all duration-200;
+}
+
+.btn-accent {
+  @apply bg-gradient-to-r from-brand-amber-gold to-brand-sunset-orange text-white font-semibold py-3 px-6 rounded-xl shadow-soft hover:shadow-medium transform hover:scale-105 transition-all duration-200;
+}
+
+.btn-culture {
+  @apply bg-gradient-to-r from-brand-ocobo-pink to-brand-ocobo-light text-white font-semibold py-3 px-6 rounded-xl shadow-soft hover:shadow-medium transform hover:scale-105 transition-all duration-200;
+}
+
+.btn-nature {
+  @apply bg-gradient-to-r from-brand-forest-green to-brand-hills-green text-white font-semibold py-3 px-6 rounded-xl shadow-soft hover:shadow-medium transform hover:scale-105 transition-all duration-200;
+}
+
+.btn-sky {
+  @apply bg-gradient-to-r from-brand-sky-blue to-brand-path-cream text-white font-semibold py-3 px-6 rounded-xl shadow-soft hover:shadow-medium transform hover:scale-105 transition-all duration-200;
+}
+
+.btn-ocobo {
+  @apply bg-gradient-to-r from-brand-ocobo-pink to-brand-ocobo-light text-white font-semibold py-3 px-6 rounded-xl shadow-soft hover:shadow-glow-ocobo transform hover:scale-105 transition-all duration-200;
+}
+
+.btn-forest {
+  @apply bg-gradient-to-r from-brand-forest-green to-brand-hills-green text-white font-semibold py-3 px-6 rounded-xl shadow-soft hover:shadow-glow-forest transform hover:scale-105 transition-all duration-200;
+}
+
+/* Card styles - Nueva paleta */
+.card {
+  @apply bg-white rounded-2xl shadow-soft p-6 border border-gray-100;
+}
+
+.card-hover {
+  @apply card hover:shadow-medium hover:scale-105 transition-all duration-300;
+}
+
+.card-culture {
+  @apply bg-white rounded-2xl shadow-soft p-6 border border-pink-200 hover:shadow-glow-ocobo transition-all duration-300;
+}
+
+.card-nature {
+  @apply bg-white rounded-2xl shadow-soft p-6 border border-green-200 hover:shadow-glow-nature transition-all duration-300;
+}
+
+.card-gastro {
+  @apply bg-white rounded-2xl shadow-soft p-6 border border-orange-200 hover:shadow-glow-gold transition-all duration-300;
+}
+
+.card-ocobo {
+  @apply bg-white rounded-2xl shadow-soft p-6 border border-pink-200 hover:shadow-glow-ocobo transition-all duration-300;
+}
+
+.card-forest {
+  @apply bg-white rounded-2xl shadow-soft p-6 border border-green-200 hover:shadow-glow-forest transition-all duration-300;
+}
+
+/* Map markers */
+.category-marker {
+  @apply w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-lg border-2 border-white;
+}
+
+.category-marker.highlighted {
+  @apply scale-110 shadow-glow;
+}
+
+/* Progress bars - Temática de ocobos */
+.progress-bar {
+  @apply w-full bg-gray-200 rounded-full h-2 overflow-hidden;
+}
+
+.progress-fill {
+  @apply h-full bg-gradient-to-r from-brand-ocobo-pink to-brand-forest-green rounded-full transition-all duration-500;
+}
+
+.progress-fill-nature {
+  @apply h-full bg-gradient-to-r from-brand-forest-green to-brand-hills-green rounded-full transition-all duration-500;
+}
+
+.progress-fill-culture {
+  @apply h-full bg-gradient-to-r from-brand-ocobo-pink to-brand-ocobo-light rounded-full transition-all duration-500;
+}
+
+.progress-fill-gastro {
+  @apply h-full bg-gradient-to-r from-brand-amber-gold to-brand-sunset-orange rounded-full transition-all duration-500;
+}
+
+.progress-fill-ocobo {
+  @apply h-full bg-gradient-to-r from-brand-ocobo-pink to-brand-ocobo-light rounded-full transition-all duration-500;
+}
+
+.progress-fill-forest {
+  @apply h-full bg-gradient-to-r from-brand-forest-green to-brand-hills-green rounded-full transition-all duration-500;
+}
+
+/* Status indicators */
+.status-online {
+  @apply w-3 h-3 bg-green-500 rounded-full animate-pulse;
+}
+
+.status-offline {
+  @apply w-3 h-3 bg-gray-400 rounded-full;
+}
+
+/* Custom scrollbar - Temática de ocobos */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E74C7C;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2D6C4F;
+}

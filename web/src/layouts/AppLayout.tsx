@@ -1,9 +1,9 @@
 import React from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth.jsx'
+import { useAuth } from '../auth/AuthProvider'
 
 export default function AppLayout() {
-  const { user, profile, signOut } = useAuth()
+  const { user, logout } = useAuth()
   const location = useLocation()
 
   const navigation = [
@@ -18,7 +18,7 @@ export default function AppLayout() {
   const isActive = (path: string) => location.pathname === path
 
   const handleSignOut = async () => {
-    await signOut()
+    logout()
   }
 
   return (
@@ -60,11 +60,11 @@ export default function AppLayout() {
             <div className="flex items-center space-x-4">
               <div className="hidden sm:flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-r from-forest to-forest2 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  {profile?.full_name?.charAt(0) || 'U'}
+                  {user?.full_name?.charAt(0) || 'U'}
                 </div>
                 <div className="text-sm">
-                  <div className="font-medium text-forest">{profile?.full_name || 'Usuario'}</div>
-                  <div className="text-xs text-gray-500">{profile?.role || 'Explorador'}</div>
+                  <div className="font-medium text-forest">{user?.full_name || 'Usuario'}</div>
+                  <div className="text-xs text-gray-500">{user?.role === 'usuario' ? 'Explorador' : 'Usuario'}</div>
                 </div>
               </div>
               <button
@@ -80,10 +80,8 @@ export default function AppLayout() {
       </header>
 
       {/* Main Content with proper spacing */}
-      <main id="content" className="relative z-0 pt-16 pb-20">
-        <div className="container mx-auto px-4">
-          <Outlet />
-        </div>
+      <main id="content" className="relative z-0 pt-16">
+        <Outlet />
       </main>
 
       {/* Footer */}

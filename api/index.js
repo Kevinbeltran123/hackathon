@@ -1141,6 +1141,216 @@ function diversifyPlaces(places, interests, maxPlaces) {
   return result.slice(0, maxPlaces);
 }
 
+// =================== COUPON SYSTEM API ===================
+
+// Get all active coupons
+app.get('/api/coupons', (req, res) => {
+  try {
+    const { place_id, lat, lng, radius = 5000 } = req.query;
+    
+    let query = `
+      SELECT c.*, p.name as place_name, p.lat as place_lat, p.lng as place_lng
+      FROM coupons c 
+      LEFT JOIN place p ON c.place_id = p.id
+      WHERE c.is_active = 1 AND c.valid_until >= date('now')
+    `;
+    
+    let params = [];
+    
+    if (place_id) {
+      query += ' AND (c.place_id = ? OR c.place_id IS NULL)';
+      params.push(place_id);
+    }
+    
+    const coupons = db.prepare(query).all(...params);
+    
+    // Filter by location if coordinates provided
+    let filteredCoupons = coupons;
+    if (lat && lng) {
+      const userLat = parseFloat(lat);
+      const userLng = parseFloat(lng);
+      const maxRadius = parseInt(radius);
+      
+      filteredCoupons = coupons.filter(coupon => {
+        if (!coupon.place_lat || !coupon.place_lng) {
+          return true; // Universal coupons (no location restriction)
+        }
+        
+        const distance = distanceMeters(
+          { lat: userLat, lng: userLng },
+          { lat: coupon.place_lat, lng: coupon.place_lng }
+        );
+        
+        return distance <= maxRadius;
+      });
+    }
+    
+    // Add usage statistics
+    const enrichedCoupons = filteredCoupons.map(coupon => {
+      const usageCount = db.prepare('SELECT COUNT(*) as count FROM coupon_usage WHERE coupon_id = ?').get(coupon.id);
+      
+      return {
+        ...coupon,
+        current_usage: usageCount?.count || 0,
+        is_available: (!coupon.usage_limit || (usageCount?.count || 0) < coupon.usage_limit)
+      };
+    });
+    
+    res.json(enrichedCoupons);
+  } catch (error) {
+    console.error('Coupon fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch coupons' });
+  }
+});
+
+// Get coupons for a specific place
+app.get('/api/places/:placeId/coupons', (req, res) => {
+  try {
+    const { placeId } = req.params;
+    
+    const coupons = db.prepare(`
+      SELECT c.*, p.name as place_name
+      FROM coupons c 
+      LEFT JOIN place p ON c.place_id = p.id
+      WHERE c.is_active = 1 
+        AND c.valid_until >= date('now')
+        AND (c.place_id = ? OR c.place_id IS NULL)
+      ORDER BY c.created_at DESC
+    `).all(placeId);
+    
+    // Add usage statistics
+    const enrichedCoupons = coupons.map(coupon => {
+      const usageCount = db.prepare('SELECT COUNT(*) as count FROM coupon_usage WHERE coupon_id = ?').get(coupon.id);
+      
+      return {
+        ...coupon,
+        current_usage: usageCount?.count || 0,
+        is_available: (!coupon.usage_limit || (usageCount?.count || 0) < coupon.usage_limit)
+      };
+    });
+    
+    res.json(enrichedCoupons);
+  } catch (error) {
+    console.error('Place coupons fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch place coupons' });
+  }
+});
+
+// Use/redeem a coupon
+app.post('/api/coupons/:couponId/redeem', (req, res) => {
+  try {
+    const { couponId } = req.params;
+    const { user_id, place_id } = req.body;
+    
+    if (!user_id) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+    
+    // Get coupon details
+    const coupon = db.prepare(`
+      SELECT c.*, p.name as place_name
+      FROM coupons c 
+      LEFT JOIN place p ON c.place_id = p.id
+      WHERE c.id = ?
+    `).get(couponId);
+    
+    if (!coupon) {
+      return res.status(404).json({ error: 'Coupon not found' });
+    }
+    
+    // Check if coupon is still valid
+    if (!coupon.is_active) {
+      return res.status(400).json({ error: 'Coupon is no longer active' });
+    }
+    
+    if (new Date(coupon.valid_until) < new Date()) {
+      return res.status(400).json({ error: 'Coupon has expired' });
+    }
+    
+    // Check usage limit
+    if (coupon.usage_limit) {
+      const currentUsage = db.prepare('SELECT COUNT(*) as count FROM coupon_usage WHERE coupon_id = ?').get(couponId);
+      if (currentUsage.count >= coupon.usage_limit) {
+        return res.status(400).json({ error: 'Coupon usage limit reached' });
+      }
+    }
+    
+    // Check if user has already used this coupon (if one-time per user)
+    const existingUsage = db.prepare('SELECT * FROM coupon_usage WHERE coupon_id = ? AND user_id = ?').get(couponId, user_id);
+    if (existingUsage) {
+      return res.status(400).json({ error: 'You have already used this coupon' });
+    }
+    
+    // Validate place if coupon is place-specific
+    if (coupon.place_id && place_id && coupon.place_id != place_id) {
+      return res.status(400).json({ error: 'This coupon can only be used at the specified location' });
+    }
+    
+    // Record coupon usage
+    const usageId = uuidv4();
+    db.prepare(`
+      INSERT INTO coupon_usage (
+        id, coupon_id, user_id, place_id, used_at, discount_applied
+      ) VALUES (?, ?, ?, ?, datetime('now'), ?)
+    `).run(usageId, couponId, user_id, place_id || coupon.place_id, coupon.discount_value);
+    
+    // Update place visit metrics if place specified
+    if (place_id || coupon.place_id) {
+      const targetPlaceId = place_id || coupon.place_id;
+      try {
+        db.prepare(`
+          INSERT INTO place_visits (id, place_id, user_id, visit_date, source)
+          VALUES (?, ?, ?, date('now'), 'coupon_redemption')
+        `).run(uuidv4(), targetPlaceId, user_id);
+      } catch (err) {
+        console.log('Place visit already recorded today:', err.message);
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: 'Coupon redeemed successfully!',
+      usage_id: usageId,
+      discount_applied: coupon.discount_value,
+      coupon: {
+        title: coupon.title,
+        description: coupon.description,
+        discount_type: coupon.discount_type,
+        discount_value: coupon.discount_value,
+        place_name: coupon.place_name
+      }
+    });
+    
+  } catch (error) {
+    console.error('Coupon redemption error:', error);
+    res.status(500).json({ error: 'Failed to redeem coupon' });
+  }
+});
+
+// Get user's coupon usage history
+app.get('/api/users/:userId/coupons', (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const usedCoupons = db.prepare(`
+      SELECT 
+        cu.*, 
+        c.title, c.description, c.discount_type, c.discount_value,
+        p.name as place_name
+      FROM coupon_usage cu
+      JOIN coupons c ON cu.coupon_id = c.id
+      LEFT JOIN place p ON cu.place_id = p.id
+      WHERE cu.user_id = ?
+      ORDER BY cu.used_at DESC
+    `).all(userId);
+    
+    res.json(usedCoupons);
+  } catch (error) {
+    console.error('User coupon history error:', error);
+    res.status(500).json({ error: 'Failed to fetch coupon history' });
+  }
+});
+
 // Health
 app.get('/api/health', (req, res) => res.json({ ok:true }));
 

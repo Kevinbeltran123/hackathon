@@ -42,6 +42,9 @@ const MapView = ({
     // Store references
     mapInstanceRef.current = map;
     markersLayerRef.current = markersLayer;
+    
+    // Expose map instance globally for popup management
+    window.mapInstance = map;
 
     // Cleanup only on unmount
     return () => {
@@ -51,6 +54,7 @@ const MapView = ({
         markersLayerRef.current = null;
         markersRef.current.clear();
         routeLayerRef.current = null;
+        window.mapInstance = null;
       }
     };
   }, []); // Only once
@@ -129,12 +133,14 @@ const MapView = ({
       });
     }
     
-    if (couponsBtn) {
-      L.DomEvent.on(couponsBtn, 'click', (e) => {
-        L.DomEvent.stopPropagation(e);
-        onPlaceClick && onPlaceClick(place);
-      });
-    }
+     if (couponsBtn) {
+       L.DomEvent.on(couponsBtn, 'click', (e) => {
+         L.DomEvent.stopPropagation(e);
+         // Close all open popups before opening modal
+         mapInstanceRef.current?.closePopup();
+         onPlaceClick && onPlaceClick(place);
+       });
+     }
 
     return popup;
   };
@@ -252,6 +258,14 @@ const MapView = ({
       {/* Custom styles */}
       <style id="map-custom-styles">
         {`
+          .leaflet-container {
+            z-index: 1 !important;
+          }
+          
+          .leaflet-control-container {
+            z-index: 2 !important;
+          }
+          
           .custom-marker {
             background: none !important;
             border: none !important;

@@ -1,6 +1,7 @@
 // Rediseñado: Check-in Inteligente para Turismo - 3 pasos
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../auth/AuthProvider'
+import TourGuideChat from '../../components/TourGuideChat'
 
 const CheckIn = () => {
   const { user } = useAuth()
@@ -818,6 +819,14 @@ const CheckIn = () => {
           </div>
         )}
       </div>
+
+      {/* Tour Guide Chat */}
+      <TourGuideChat 
+        userLocation={location}
+        userPoints={rewards?.totalPoints || 0}
+        lastCheckIn={selectedPlace ? { place: selectedPlace.name, timestamp: Date.now() } : null}
+        currentActivity="checking-in"
+      />
     </div>
   )
 }

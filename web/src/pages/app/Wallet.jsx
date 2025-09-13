@@ -1,6 +1,7 @@
 // Rediseñado: Smart Wallet Turística Gamificada
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../auth/AuthProvider'
+import TourGuideChat from '../../components/TourGuideChat'
 
 const Wallet = () => {
   const { user } = useAuth()
@@ -1161,6 +1162,14 @@ const Wallet = () => {
           </div>
         )}
       </div>
+
+      {/* Tour Guide Chat */}
+      <TourGuideChat 
+        userLocation={location}
+        userPoints={userPoints}
+        lastCheckIn={null}
+        currentActivity="managing-wallet"
+      />
     </div>
   )
 }

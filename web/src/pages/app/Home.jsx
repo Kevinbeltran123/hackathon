@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/AuthProvider';
 import MapView from '../../components/MapView';
 import useRouteBuilder from '../../hooks/useRouteBuilder';
+import TourGuideChat from '../../components/TourGuideChat';
 
 const Home = () => {
   const { user } = useAuth();
@@ -20,6 +21,41 @@ const Home = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
+  const [userLocation, setUserLocation] = useState(null);
+  const [lastCheckIn, setLastCheckIn] = useState(null);
+  const [userPoints, setUserPoints] = useState(1250); // Mock points
+
+  // Get user location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.log('Geolocation error:', error);
+          // Default to Ibagué center if geolocation fails
+          setUserLocation({ lat: 4.4389, lng: -75.2322 });
+        }
+      );
+    } else {
+      // Default location if geolocation not supported
+      setUserLocation({ lat: 4.4389, lng: -75.2322 });
+    }
+  }, []);
+
+  // Mock check-in handler
+  const handleCheckInUpdate = (checkInData) => {
+    setLastCheckIn(checkInData);
+  };
+
+  // Mock points handler
+  const handlePointsUpdate = (points, source) => {
+    setUserPoints(prev => prev + 50); // Add 50 points for chat interaction
+  };
 
   // Initialize route builder hook
   const {
@@ -771,6 +807,16 @@ const Home = () => {
           </div>
         </div>
       )}
+
+      {/* Enhanced Tour Guide Chat */}
+      <TourGuideChat 
+        userLocation={userLocation}
+        userPoints={userPoints}
+        lastCheckIn={lastCheckIn}
+        currentActivity="exploring"
+        onPointsUpdate={handlePointsUpdate}
+        onCheckInUpdate={handleCheckInUpdate}
+      />
     </div>
     </>
   );

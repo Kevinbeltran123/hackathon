@@ -356,3 +356,150 @@ main{ z-index:0; }
     color: #ffffff;
   }
 }
+
+/* =================================
+   FLOATING MENU STYLES - MENÚ FIJO
+   ================================= */
+
+/* Contenedor del menú flotante - Posición fija */
+.floating-menu {
+  /* Posición fija en la esquina superior derecha */
+  position: fixed;
+  top: 1rem; /* 16px */
+  right: 1rem; /* 16px */
+  z-index: 9999; /* Asegurar que esté por encima de todo */
+  
+  /* Transiciones suaves */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Efectos visuales */
+  border-radius: 0.75rem; /* 12px */
+  box-shadow: 
+    0 10px 25px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  
+  /* Backdrop blur para efecto glass */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Hover effect para el contenedor */
+.floating-menu:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 20px 40px -4px rgba(0, 0, 0, 0.15),
+    0 8px 16px -4px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+/* Estilos para el dropdown cuando está dentro del menú flotante */
+.floating-menu .actions-dropdown {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Responsive - Tablets y pantallas medianas */
+@media (max-width: 1024px) {
+  .floating-menu {
+    top: 0.75rem; /* 12px */
+    right: 0.75rem; /* 12px */
+  }
+}
+
+/* Responsive - Móviles */
+@media (max-width: 768px) {
+  .floating-menu {
+    top: 0.5rem; /* 8px */
+    right: 0.5rem; /* 8px */
+    
+    /* Escalar ligeramente en móviles */
+    transform: scale(0.95);
+  }
+  
+  .floating-menu:hover {
+    transform: scale(0.95) translateY(-1px);
+  }
+}
+
+/* Móviles pequeños */
+@media (max-width: 480px) {
+  .floating-menu {
+    top: 0.5rem;
+    right: 0.5rem;
+    transform: scale(0.9);
+  }
+  
+  .floating-menu:hover {
+    transform: scale(0.9) translateY(-1px);
+  }
+}
+
+/* Asegurar que el menú no interfiera con scrolling */
+.floating-menu {
+  pointer-events: auto;
+}
+
+/* Animación de entrada */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%) scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.floating-menu {
+  animation: slideInFromRight 0.4s ease-out;
+}
+
+/* Estados para diferentes dispositivos */
+@media (hover: none) {
+  /* Para dispositivos táctiles - quitar efectos hover */
+  .floating-menu:hover {
+    transform: none;
+    box-shadow: 
+      0 10px 25px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Modo oscuro automático */
+@media (prefers-color-scheme: dark) {
+  .floating-menu {
+    box-shadow: 
+      0 10px 25px -3px rgba(0, 0, 0, 0.4),
+      0 4px 6px -2px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+  
+  .floating-menu:hover {
+    box-shadow: 
+      0 20px 40px -4px rgba(0, 0, 0, 0.5),
+      0 8px 16px -4px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Accesibilidad - Reducir animaciones */
+@media (prefers-reduced-motion: reduce) {
+  .floating-menu {
+    animation: none;
+    transition: none;
+  }
+  
+  .floating-menu:hover {
+    transform: none;
+  }
+}
+
+/* Forzar que el menú esté siempre visible */
+.floating-menu {
+  visibility: visible !important;
+  display: block !important;
+}

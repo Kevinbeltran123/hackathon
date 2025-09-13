@@ -43,6 +43,14 @@ const Home = () => {
     { id: 'recreacion', name: 'Recreación', icon: '🎭', color: 'bg-green-500' },
   ];
 
+  // Listen to global toggle for filters from header
+  useEffect(() => {
+    const toggle = () => setShowFilters((prev) => !prev)
+    window.addEventListener('toggleFilters', toggle)
+    return () => window.removeEventListener('toggleFilters', toggle)
+  }, [])
+
+
   // Load initial data
   useEffect(() => {
     const loadData = async () => {
@@ -223,99 +231,118 @@ const Home = () => {
     <>
     <div className="h-[calc(100vh-4rem)] flex flex-col bg-gradient-to-br from-emerald-50 to-blue-50">
       {/* Top Header with Controls */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 p-3 shadow-sm z-10">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              🗺️ Explorar Ibagué - Rutas Vivas
-              {isBuilding && (
-                <div className="flex items-center gap-1 text-orange-600 text-sm">
-                  <div className="animate-spin rounded-full h-3 w-3 border-2 border-orange-500 border-t-transparent"></div>
-                  Actualizando...
-                </div>
-              )}
-            </h2>
-            <div className="flex items-center gap-4 text-sm text-gray-600">
-              <span>{filteredPlaces.length} lugares disponibles</span>
-              {routePlaces.length > 0 && (
-                <span className="flex items-center gap-1 text-orange-600">
-                  <span>🎯</span>
-                  <span className="font-semibold">{routePlaces.length} en ruta</span>
-                  {routePlaces.length > 1 && (
-                    <span>• {routeStats.formattedDistance} • {routeStats.formattedTime}</span>
-                  )}
+      <div className="bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg z-10">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Left Side - Title and Status */}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-1">
+                🗺️ Explorar Ibagué - Rutas Vivas
+                {isBuilding && (
+                  <div className="flex items-center gap-1 text-orange-600 text-sm">
+                    <div className="animate-spin rounded-full h-3 w-3 border-2 border-orange-500 border-t-transparent"></div>
+                    Actualizando...
+                  </div>
+                )}
+              </h2>
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  {filteredPlaces.length} lugares disponibles
                 </span>
-              )}
+                {routePlaces.length > 0 && (
+                  <span className="flex items-center gap-1 text-orange-600 font-medium">
+                    <span>🎯</span>
+                    <span>{routePlaces.length} en ruta</span>
+                    {routePlaces.length > 1 && (
+                      <span className="text-gray-500">• {routeStats.formattedDistance} • {routeStats.formattedTime}</span>
+                    )}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-          
-          {/* Desktop Controls */}
-          <div className="hidden md:flex items-center space-x-2">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-            >
-              {showFilters ? '✕ Filtros' : '🔍 Filtros'}
-            </button>
-            {routePlaces.length >= 2 && (
+            
+            {/* Right Side - Page Specific Controls */}
+            <div className="flex items-center gap-3">
+              {/* Filters Button */}
               <button
-                onClick={() => setShowSaveRouteModal(true)}
-                className="bg-green-50 hover:bg-green-100 text-green-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  showFilters 
+                    ? 'bg-blue-600 text-white shadow-md' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
               >
-                💾 Guardar Ruta
+                <span>🔍</span>
+                <span className="hidden sm:inline">Filtros</span>
               </button>
-            )}
-            {routePlaces.length > 0 && (
-              <button
-                onClick={handleClearRoute}
-                className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-              >
-                🗑️ Limpiar
-              </button>
-            )}
-          </div>
 
-          {/* Mobile Controls */}
-          <div className="md:hidden flex items-center space-x-2">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="bg-blue-50 hover:bg-blue-100 text-blue-600 p-2 rounded-lg text-sm transition-colors duration-200"
-            >
-              🔍
-            </button>
-            <button
-              onClick={() => setShowSidebar(!showSidebar)}
-              className="bg-gray-50 hover:bg-gray-100 text-gray-600 p-2 rounded-lg text-sm transition-colors duration-200 relative"
-            >
-              📍
-              {routePlaces.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {routePlaces.length}
-                </span>
-              )}
-            </button>
+
+              {/* Route Action Buttons (Desktop only) */}
+              <div className="hidden lg:flex items-center gap-2">
+                {routePlaces.length >= 2 && (
+                  <button
+                    onClick={() => setShowSaveRouteModal(true)}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md"
+                  >
+                    <span>💾</span>
+                    <span>Guardar</span>
+                  </button>
+                )}
+                {routePlaces.length > 0 && (
+                  <button
+                    onClick={handleClearRoute}
+                    className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-md"
+                  >
+                    <span>🗑️</span>
+                    <span>Limpiar</span>
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
       {showFilters && (
-        <div className="bg-white shadow-lg border-b border-gray-200 p-4">
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
+        <div className="bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200 animate-in slide-in-from-top-5 duration-200">
+          <div className="px-4 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <span>🏷️</span>
+                Filtrar por categoría
+              </h3>
               <button
-                key={category.id}
-                onClick={() => handleFilterChange(category.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  filter === category.id
-                    ? `${category.color} text-white shadow-lg`
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                onClick={() => setShowFilters(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <span>{category.icon}</span>
-                <span>{category.name}</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
-            ))}
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => handleFilterChange(category.id)}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border ${
+                    filter === category.id
+                      ? `${category.color} text-white shadow-lg scale-105 border-transparent`
+                      : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                  }`}
+                >
+                  <span className="text-base">{category.icon}</span>
+                  <span>{category.name}</span>
+                  {filter === category.id && (
+                    <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}

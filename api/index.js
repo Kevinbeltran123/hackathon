@@ -1149,9 +1149,8 @@ app.get('/api/coupons', (req, res) => {
     const { place_id, lat, lng, radius = 5000 } = req.query;
     
     let query = `
-      SELECT c.*, p.name as place_name, p.lat as place_lat, p.lng as place_lng
+      SELECT c.*
       FROM coupons c 
-      LEFT JOIN place p ON c.place_id = p.id
       WHERE c.is_active = 1 AND c.valid_until >= date('now')
     `;
     
@@ -1209,9 +1208,8 @@ app.get('/api/places/:placeId/coupons', (req, res) => {
     const { placeId } = req.params;
     
     const coupons = db.prepare(`
-      SELECT c.*, p.name as place_name
+      SELECT c.*
       FROM coupons c 
-      LEFT JOIN place p ON c.place_id = p.id
       WHERE c.is_active = 1 
         AND c.valid_until >= date('now')
         AND (c.place_id = ? OR c.place_id IS NULL)
@@ -1248,9 +1246,8 @@ app.post('/api/coupons/:couponId/redeem', (req, res) => {
     
     // Get coupon details
     const coupon = db.prepare(`
-      SELECT c.*, p.name as place_name
+      SELECT c.*
       FROM coupons c 
-      LEFT JOIN place p ON c.place_id = p.id
       WHERE c.id = ?
     `).get(couponId);
     
@@ -1335,11 +1332,9 @@ app.get('/api/users/:userId/coupons', (req, res) => {
     const usedCoupons = db.prepare(`
       SELECT 
         cu.*, 
-        c.title, c.description, c.discount_type, c.discount_value,
-        p.name as place_name
+        c.title, c.description, c.discount_type, c.discount_value
       FROM coupon_usage cu
       JOIN coupons c ON cu.coupon_id = c.id
-      LEFT JOIN place p ON cu.place_id = p.id
       WHERE cu.user_id = ?
       ORDER BY cu.used_at DESC
     `).all(userId);
@@ -1352,6 +1347,161 @@ app.get('/api/users/:userId/coupons', (req, res) => {
 });
 
 // Health
+// Routes API endpoints
+app.post('/api/routes', (req, res) => {
+  try {
+    const { name, user_id, places, total_distance, estimated_time } = req.body;
+    
+    if (!name || !user_id || !places || places.length < 2) {
+      return res.status(400).json({ error: 'Invalid route data' });
+    }
+
+    // Create routes table if it doesn't exist
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS routes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        total_distance REAL DEFAULT 0,
+        estimated_time REAL DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create route_places table if it doesn't exist
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS route_places (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        route_id INTEGER NOT NULL,
+        place_id INTEGER NOT NULL,
+        order_index INTEGER NOT NULL,
+        lat REAL NOT NULL,
+        lng REAL NOT NULL,
+        FOREIGN KEY (route_id) REFERENCES routes (id) ON DELETE CASCADE
+      )
+    `);
+
+    // Insert route
+    const insertRoute = db.prepare(`
+      INSERT INTO routes (name, user_id, total_distance, estimated_time)
+      VALUES (?, ?, ?, ?)
+    `);
+    
+    const routeResult = insertRoute.run(name, user_id, total_distance || 0, estimated_time || 0);
+    const routeId = routeResult.lastInsertRowid;
+
+    // Insert route places
+    const insertRoutePlace = db.prepare(`
+      INSERT INTO route_places (route_id, place_id, order_index, lat, lng)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    places.forEach((place, index) => {
+      insertRoutePlace.run(routeId, place.place_id, place.order || index + 1, place.lat, place.lng);
+    });
+
+    res.json({
+      id: routeId,
+      name,
+      user_id,
+      places: places.length,
+      total_distance,
+      estimated_time,
+      created_at: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error saving route:', error);
+    res.status(500).json({ error: 'Failed to save route' });
+  }
+});
+
+// Get user's saved routes
+app.get('/api/users/:userId/routes', (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const routes = db.prepare(`
+      SELECT 
+        r.*,
+        COUNT(rp.id) as place_count
+      FROM routes r
+      LEFT JOIN route_places rp ON r.id = rp.route_id
+      WHERE r.user_id = ?
+      GROUP BY r.id
+      ORDER BY r.created_at DESC
+    `).all(userId);
+
+    res.json(routes);
+  } catch (error) {
+    console.error('Error fetching user routes:', error);
+    res.status(500).json({ error: 'Failed to fetch routes' });
+  }
+});
+
+// Get specific route with places
+app.get('/api/routes/:routeId', (req, res) => {
+  try {
+    const { routeId } = req.params;
+    
+    // Get route info
+    const route = db.prepare(`
+      SELECT * FROM routes WHERE id = ?
+    `).get(routeId);
+
+    if (!route) {
+      return res.status(404).json({ error: 'Route not found' });
+    }
+
+    // Get route places with place details
+    const routePlaces = db.prepare(`
+      SELECT 
+        rp.*,
+        p.name,
+        p.description,
+        p.category,
+        p.tags,
+        p.rating,
+        p.address
+      FROM route_places rp
+      LEFT JOIN place p ON rp.place_id = p.id
+      WHERE rp.route_id = ?
+      ORDER BY rp.order_index
+    `).all(routeId);
+
+    res.json({
+      ...route,
+      places: routePlaces
+    });
+  } catch (error) {
+    console.error('Error fetching route:', error);
+    res.status(500).json({ error: 'Failed to fetch route' });
+  }
+});
+
+// Delete route
+app.delete('/api/routes/:routeId', (req, res) => {
+  try {
+    const { routeId } = req.params;
+    
+    // Delete route places first (due to foreign key)
+    db.prepare('DELETE FROM route_places WHERE route_id = ?').run(routeId);
+    
+    // Delete route
+    const result = db.prepare('DELETE FROM routes WHERE id = ?').run(routeId);
+    
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Route not found' });
+    }
+
+    res.json({ message: 'Route deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting route:', error);
+    res.status(500).json({ error: 'Failed to delete route' });
+  }
+});
+
 app.get('/api/health', (req, res) => res.json({ ok:true }));
 
 app.listen(PORT, () => {

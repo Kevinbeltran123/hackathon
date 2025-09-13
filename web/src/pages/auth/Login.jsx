@@ -74,9 +74,7 @@ const Login = () => {
       <div className="max-w-md w-full">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-r from-ocobo to-gold rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-white text-2xl">🌸</span>
-          </div>
+          <img src="/LogoRutasVivas.png" alt="Rutas VIVAS" className="w-40 h-40 object-contain mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-forest">Rutas VIVAS</h1>
           <p className="text-forest2">Tolima</p>
         </div>
@@ -154,14 +152,7 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Demo Credentials */}
-        <div className="mt-6 bg-gradient-to-r from-forest/10 to-forest2/10 rounded-lg p-4 border border-forest/20">
-          <h3 className="text-sm font-semibold text-forest mb-2">Credenciales de Demo:</h3>
-          <div className="text-xs text-gray-600 space-y-1">
-            <p><strong>Usuario:</strong> usuario@demo.com / password123</p>
-            <p><strong>Empresario:</strong> empresario@demo.com / business123</p>
-          </div>
-        </div>
+        {/* Sección de credenciales de demo oculta intencionalmente */}
       </div>
 
       {/* Toast */}

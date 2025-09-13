@@ -325,7 +325,8 @@ const Home = () => {
         {/* Map Section */}
         <div className="flex-1 lg:w-[70%] relative">
           <MapView
-            places={filteredPlaces}
+            places={places}
+            filteredPlaces={filteredPlaces}
             routePlaces={routePlaces}
             coupons={coupons}
             onPlaceClick={handleViewCoupons}

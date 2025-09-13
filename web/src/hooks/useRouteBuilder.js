@@ -62,7 +62,7 @@ export const useRouteBuilder = () => {
       if (exists) return prev;
       return [...prev, { ...place, routeOrder: prev.length + 1 }];
     });
-    setTimeout(() => setIsBuilding(false), 300);
+    setTimeout(() => setIsBuilding(false), 50);
   }, []);
 
   // Remove place from route

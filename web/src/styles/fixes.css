@@ -1,0 +1,7 @@
+/* Helper CSS for header layout */
+.header-right { 
+  margin-left: auto; 
+  display: flex; 
+  gap: .5rem; 
+  align-items: center; 
+}

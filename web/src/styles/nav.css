@@ -1,0 +1,10 @@
+/* Accesibilidad y comportamiento para <details>/<summary> del botón "Más" */
+details[open] > summary { outline: none; }
+summary { list-style: none; }
+summary::-webkit-details-marker { display: none; }
+summary:focus { outline: 2px solid #059669; /* emerald-600 */ }
+
+/* Asegurar que los dropdowns estén por encima del contenido */
+.nav-dropdown { z-index: 50; }
+
+
